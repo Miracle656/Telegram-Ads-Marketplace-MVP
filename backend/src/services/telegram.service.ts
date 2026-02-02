@@ -38,7 +38,7 @@ export const fetchChannelStats = async (channelUsername: string): Promise<Channe
         return {
             subscriberCount,
             averageViews,
-            language: chat.language_code,
+            language: (chat as any).language_code,
             isPremium: false // Will be populated if Telegram API provides this
         };
     } catch (error) {
