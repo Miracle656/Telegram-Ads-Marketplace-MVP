@@ -1,0 +1,10 @@
+{
+    "outputDirectory": "mini-app/dist",
+    "framework": "vite",
+    "rewrites": [
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ]
+}
