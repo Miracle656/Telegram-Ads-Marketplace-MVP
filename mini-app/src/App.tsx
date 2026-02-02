@@ -7,7 +7,7 @@ import DealFlow from './pages/DealFlow';
 import { Loader2 } from 'lucide-react';
 
 function App() {
-    const { webApp, user } = useTelegramWebApp();
+    const { user } = useTelegramWebApp();
     const [role, setRole] = useState<'owner' | 'advertiser' | null>(null);
     const [loading, setLoading] = useState(true);
 

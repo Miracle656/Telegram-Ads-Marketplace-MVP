@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+
 import { api } from '../services/api';
 import { Plus, Search, Filter, TrendingUp } from 'lucide-react';
 
@@ -22,7 +22,7 @@ interface Channel {
 }
 
 export default function AdvertiserDashboard() {
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
     const [view, setView] = useState<'campaigns' | 'channels'>('channels');
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
     const [channels, setChannels] = useState<Channel[]>([]);
