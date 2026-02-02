@@ -65,19 +65,19 @@ Add these (copy from your `.env` file):
 ```
 NODE_ENV=production
 PORT=10000
-DATABASE_URL=postgresql://postgres:SV$vRyrbfExLzV2@db.nuwmwdapyavpncnhefbz.supabase.co:6543/postgres?pgbouncer=true
-TELEGRAM_BOT_TOKEN=8416742710:AAE7Mcqv7CJ4L4r1iQRWQn2npBUxh9cE3_A
-TELEGRAM_BOT_USERNAME=telemartadsbot
+DATABASE_URL=your_supabase_connection_string_here
+TELEGRAM_BOT_TOKEN=your_bot_token_from_botfather
+TELEGRAM_BOT_USERNAME=your_bot_username
 TELEGRAM_MINI_APP_URL=http://localhost:5173
 TON_NETWORK=testnet
 TON_API_KEY=
 TON_MASTER_WALLET_MNEMONIC=
-ENCRYPTION_KEY=bzHfrX1eUc2k4pMi0g3QDNvOCaKA6Rh5
-JWT_SECRET=PK9T4rYjM7AaNuECD10viIpsoqkbcGWRQOlgtdyJVhUzp
+ENCRYPTION_KEY=your_32_character_encryption_key
+JWT_SECRET=your_jwt_secret_key
 DEAL_TIMEOUT=604800000
 POST_VERIFICATION_DURATION=86400000
 ENABLE_CRON_JOBS=true
-INTERNAL_API_KEY=ZLoJDjiFgkIwr4sz1nmY59PG3xSyla2cAWUE6fVXCqhQP
+INTERNAL_API_KEY=your_internal_api_key
 ```
 
 **Important**: Make sure to update `TELEGRAM_MINI_APP_URL` to your Vercel URL once you deploy the frontend!
