@@ -1,0 +1,281 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CHANNEL_OWNER
+  ADVERTISER
+  BOTH
+}
+
+enum DealStatus {
+  NEGOTIATING
+  AWAITING_PAYMENT
+  PAYMENT_RECEIVED
+  CREATIVE_PENDING
+  CREATIVE_REVIEW
+  CREATIVE_APPROVED
+  SCHEDULED
+  POSTED
+  VERIFYING
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+enum AdFormat {
+  POST
+  FORWARD
+  REPOST
+  STORY
+  CUSTOM
+}
+
+enum CreativeStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REVISION_REQUESTED
+  REJECTED
+}
+
+model User {
+  id                String      @id @default(cuid())
+  telegramId        String      @unique
+  username          String?
+  firstName         String?
+  lastName          String?
+  role              UserRole    @default(BOTH)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  // Relations
+  ownedChannels     Channel[]
+  campaigns         Campaign[]
+  dealsAsOwner      Deal[]      @relation("OwnerDeals")
+  dealsAsAdvertiser Deal[]      @relation("AdvertiserDeals")
+  managedChannels   ChannelAdmin[]
+
+  @@index([telegramId])
+}
+
+model Channel {
+  id                String      @id @default(cuid())
+  telegramChannelId String      @unique
+  title             String
+  username          String?
+  description       String?
+  subscriberCount   Int         @default(0)
+  averageViews      Int         @default(0)
+  language          String?
+  isPremium         Boolean     @default(false)
+  botAdded          Boolean     @default(false)
+  lastStatsUpdate   DateTime?
+  isActive          Boolean     @default(true)
+  ownerId           String
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  // Relations
+  owner             User        @relation(fields: [ownerId], references: [id])
+  admins            ChannelAdmin[]
+  adFormats         ChannelAdFormat[]
+  listings          ChannelListing[]
+  deals             Deal[]
+  posts             Post[]
+
+  @@index([ownerId])
+  @@index([telegramChannelId])
+}
+
+model ChannelAdmin {
+  id          String   @id @default(cuid())
+  channelId   String
+  userId      String
+  canPost     Boolean  @default(true)
+  canManage   Boolean  @default(false)
+  addedAt     DateTime @default(now())
+  lastVerified DateTime @default(now())
+
+  // Relations
+  channel     Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@unique([channelId, userId])
+  @@index([userId])
+}
+
+model ChannelAdFormat {
+  id          String    @id @default(cuid())
+  channelId   String
+  format      AdFormat
+  customName  String?   // For CUSTOM format
+  price       Int       // In TON (smallest unit)
+  description String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  channel     Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@index([channelId])
+}
+
+model Campaign {
+  id              String   @id @default(cuid())
+  title           String
+  brief           String
+  targetFormats   AdFormat[]
+  budget          Int      // In TON (smallest unit)
+  minSubscribers  Int?
+  minViews        Int?
+  preferredLanguage String?
+  isActive        Boolean  @default(true)
+  advertiserId    String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  advertiser      User     @relation(fields: [advertiserId], references: [id])
+  applications    CampaignApplication[]
+  deals           Deal[]
+
+  @@index([advertiserId])
+}
+
+model CampaignApplication {
+  id           String   @id @default(cuid())
+  campaignId   String
+  listingId    String
+  message      String?
+  status       String   @default("pending") // pending, accepted, rejected
+  createdAt    DateTime @default(now())
+
+  // Relations
+  campaign     Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  listing      ChannelListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([listingId])
+}
+
+model ChannelListing {
+  id          String   @id @default(cuid())
+  channelId   String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  channel     Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  applications CampaignApplication[]
+  deals       Deal[]
+
+  @@index([channelId])
+}
+
+model Deal {
+  id              String      @id @default(cuid())
+  channelId       String
+  channelOwnerId  String
+  advertiserId    String
+  campaignId      String?
+  listingId       String?
+  adFormatType    AdFormat
+  customFormatName String?
+  agreedPrice     Int         // In TON (smallest unit)
+  status          DealStatus  @default(NEGOTIATING)
+  scheduledPostTime DateTime?
+  lastActivityAt  DateTime    @default(now())
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Relations
+  channel         Channel     @relation(fields: [channelId], references: [id])
+  owner           User        @relation("OwnerDeals", fields: [channelOwnerId], references: [id])
+  advertiser      User        @relation("AdvertiserDeals", fields: [advertiserId], references: [id])
+  campaign        Campaign?   @relation(fields: [campaignId], references: [id])
+  listing         ChannelListing? @relation(fields: [listingId], references: [id])
+  payment         Payment?
+  creatives       Creative[]
+  post            Post?
+
+  @@index([channelOwnerId])
+  @@index([advertiserId])
+  @@index([status])
+  @@index([lastActivityAt])
+}
+
+model Creative {
+  id          String          @id @default(cuid())
+  dealId      String
+  content     String
+  mediaUrls   String[]
+  status      CreativeStatus  @default(DRAFT)
+  version     Int             @default(1)
+  feedback    String?
+  submittedAt DateTime?
+  reviewedAt  DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Relations
+  deal        Deal            @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
+  @@index([status])
+}
+
+model Payment {
+  id                String   @id @default(cuid())
+  dealId            String   @unique
+  escrowWallet      String   // TON wallet address for this deal
+  encryptedKey      String   // Encrypted wallet private key
+  amount            Int      // In TON (smallest unit)
+  paymentAddress    String?  // Address advertiser should send to
+  transactionHash   String?
+  isPaid            Boolean  @default(false)
+  isReleased        Boolean  @default(false)
+  isRefunded        Boolean  @default(false)
+  paidAt            DateTime?
+  releasedAt        DateTime?
+  refundedAt        DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  deal              Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
+  @@index([isPaid])
+}
+
+model Post {
+  id                String   @id @default(cuid())
+  dealId            String   @unique
+  channelId         String
+  telegramMessageId Int
+  postedAt          DateTime @default(now())
+  isDeleted         Boolean  @default(false)
+  isEdited          Boolean  @default(false)
+  verifiedUntil     DateTime
+  lastCheckedAt     DateTime @default(now())
+  isVerified        Boolean  @default(false)
+  
+  // Relations
+  deal              Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  channel           Channel  @relation(fields: [channelId], references: [id])
+
+  @@index([dealId])
+  @@index([channelId])
+  @@index([verifiedUntil])
+}

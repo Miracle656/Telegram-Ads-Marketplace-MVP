@@ -1,0 +1,66 @@
+import axios, { AxiosInstance } from 'axios';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
+let telegramInitData = '';
+
+if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+    telegramInitData = window.Telegram.WebApp.initData;
+}
+
+const apiClient: AxiosInstance = axios.create({
+    baseURL: API_BASE_URL,
+    headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-Init-Data': telegramInitData
+    }
+});
+
+// Add response interceptor for error handling
+apiClient.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            console.error('Authentication failed');
+        }
+        return Promise.reject(error);
+    }
+);
+
+export const api = {
+    // Channels
+    channels: {
+        list: (params?: any) => apiClient.get('/channels', { params }),
+        create: (data: any) => apiClient.post('/channels', data),
+        getStats: (id: string) => apiClient.get(`/channels/${id}/stats`),
+        updatePricing: (id: string, data: any) => apiClient.put(`/channels/${id}/pricing`, data),
+        addAdmins: (id: string) => apiClient.post(`/channels/${id}/admins`)
+    },
+
+    // Campaigns
+    campaigns: {
+        list: (params?: any) => apiClient.get('/campaigns', { params }),
+        create: (data: any) => apiClient.post('/campaigns', data),
+        apply: (id: string, data: any) => apiClient.post(`/campaigns/${id}/apply`, data),
+        getApplications: (id: string) => apiClient.get(`/campaigns/${id}/applications`)
+    },
+
+    // Deals
+    deals: {
+        list: () => apiClient.get('/deals'),
+        create: (data: any) => apiClient.post('/deals', data),
+        get: (id: string) => apiClient.get(`/deals/${id}`),
+        accept: (id: string) => apiClient.put(`/deals/${id}/accept`),
+        submitCreative: (id: string, data: any) => apiClient.post(`/deals/${id}/creative`, data),
+        approve: (id: string, data: any) => apiClient.put(`/deals/${id}/approve`, data),
+        revise: (id: string, data: any) => apiClient.put(`/deals/${id}/revise`, data)
+    },
+
+    // Payments
+    payments: {
+        initiate: (dealId: string) => apiClient.post('/payments/initiate', { dealId }),
+        getStatus: (dealId: string) => apiClient.get(`/payments/${dealId}/status`)
+    }
+};
+
+export default apiClient;

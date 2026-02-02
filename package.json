@@ -1,0 +1,23 @@
+{
+  "name": "telegram-ads-marketplace",
+  "version": "1.0.0",
+  "description": "Telegram Mini App for ads marketplace connecting channel owners and advertisers",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "mini-app"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w backend\" \"npm run dev -w mini-app\"",
+    "build": "npm run build -w backend && npm run build -w mini-app",
+    "test": "npm run test -w backend",
+    "type-check": "npm run type-check -w backend && npm run type-check -w mini-app"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

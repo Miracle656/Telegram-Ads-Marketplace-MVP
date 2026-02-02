@@ -1,0 +1,38 @@
+# Render Deployment Configuration
+# https://render.com/docs/blueprint-spec
+
+services:
+  # Backend API Service
+  - type: web
+    name: telegram-ads-backend
+    runtime: node
+    plan: free
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        sync: false  # Set in Render dashboard
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_BOT_USERNAME
+        value: telemartadsbot
+      - key: TELEGRAM_MINI_APP_URL
+        sync: false  # Will be your Vercel URL
+      - key: TON_NETWORK
+        value: testnet
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: DEAL_TIMEOUT
+        value: 604800000
+      - key: POST_VERIFICATION_DURATION
+        value: 86400000
+      - key: ENABLE_CRON_JOBS
+        value: true
+      - key: INTERNAL_API_KEY
+        sync: false
