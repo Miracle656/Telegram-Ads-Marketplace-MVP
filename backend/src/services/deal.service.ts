@@ -115,7 +115,7 @@ export class DealService {
     /**
      * Get deals that have timed out
      */
-    async getTimedOutDeals(): Promise<Deal[]> {
+    async getTimedOutDeals() {
         const timeout = parseInt(process.env.DEAL_TIMEOUT || '604800000'); // 7 days default
         const cutoffDate = new Date(Date.now() - timeout);
 
