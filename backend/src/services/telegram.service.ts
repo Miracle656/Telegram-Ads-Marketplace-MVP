@@ -48,12 +48,28 @@ export const fetchChannelStats = async (channelUsername: string): Promise<Channe
 };
 
 /**
- * Get full channel details by username
+ * Get full channel details by username OR channel ID
+ * If input starts with @ or is non-numeric, treat as username
+ * If input is numeric (starts with - or is all digits), treat as channel ID
  */
-export const getChannelDetails = async (channelUsername: string) => {
+export const getChannelDetails = async (channelIdentifier: string) => {
     const bot = getBot();
     try {
-        const chat = await bot.getChat(`@${channelUsername}`);
+        // Determine if it's a username or channel ID
+        let chatIdentifier: string | number;
+
+        // Clean up the input
+        const cleaned = channelIdentifier.trim().replace(/^@/, '');
+
+        // Check if it's a numeric ID (channels start with -100)
+        if (/^-?\d+$/.test(cleaned)) {
+            chatIdentifier = parseInt(cleaned);
+        } else {
+            // It's a username
+            chatIdentifier = `@${cleaned}`;
+        }
+
+        const chat = await bot.getChat(chatIdentifier);
         if (chat.type !== 'channel') {
             throw new Error('Not a channel');
         }
@@ -63,21 +79,35 @@ export const getChannelDetails = async (channelUsername: string) => {
             description: chat.description,
             username: chat.username
         };
-    } catch (error) {
-        console.error('Error fetching channel details:', error);
+    } catch (error: any) {
+        console.error('Error fetching channel details:', error.message);
+        if (error.message?.includes('chat not found')) {
+            throw new Error('Channel not found. Check the username/ID or ensure bot is an admin.');
+        }
         throw new Error('Failed to find channel. Make sure the bot is an admin.');
     }
 };
 
 /**
  * Verify that the bot is an admin of the channel
+ * Supports both username and channel ID
  */
-export const verifyBotIsAdmin = async (channelUsername: string): Promise<boolean> => {
+export const verifyBotIsAdmin = async (channelIdentifier: string): Promise<boolean> => {
     const bot = getBot();
 
     try {
+        // Determine if it's a username or channel ID
+        let chatIdentifier: string | number;
+        const cleaned = channelIdentifier.trim().replace(/^@/, '');
+
+        if (/^-?\d+$/.test(cleaned)) {
+            chatIdentifier = parseInt(cleaned);
+        } else {
+            chatIdentifier = `@${cleaned}`;
+        }
+
         const botInfo = await bot.getMe();
-        const member = await bot.getChatMember(`@${channelUsername}`, botInfo.id);
+        const member = await bot.getChatMember(chatIdentifier, botInfo.id);
 
         return member.status === 'administrator' || member.status === 'creator';
     } catch (error) {
