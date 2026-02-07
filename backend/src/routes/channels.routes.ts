@@ -125,10 +125,10 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
 
         // Find or create user
         const user = await prisma.user.upsert({
-            where: { telegramId: telegramUser.id },
+            where: { telegramId: BigInt(telegramUser.id) },
             update: {},
             create: {
-                telegramId: telegramUser.id,
+                telegramId: BigInt(telegramUser.id),
                 username: telegramUser.username,
                 firstName: telegramUser.firstName,
                 lastName: telegramUser.lastName,
@@ -277,10 +277,10 @@ router.post('/:id/admins', authMiddleware, verifyAdminMiddleware, async (req: Re
         // Create or update admin records
         for (const admin of admins) {
             const user = await prisma.user.upsert({
-                where: { telegramId: admin.telegramId },
+                where: { telegramId: BigInt(admin.telegramId) },
                 update: {},
                 create: {
-                    telegramId: admin.telegramId,
+                    telegramId: BigInt(admin.telegramId),
                     username: admin.username,
                     firstName: admin.firstName
                 }

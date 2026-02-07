@@ -32,7 +32,7 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
         const telegramUser = (req as any).telegramUser;
 
         const user = await prisma.user.findUnique({
-            where: { telegramId: telegramUser.id }
+            where: { telegramId: BigInt(telegramUser.id) }
         });
 
         if (!user) {

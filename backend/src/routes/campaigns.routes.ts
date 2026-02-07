@@ -67,10 +67,10 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
 
         // Find or create user
         const user = await prisma.user.upsert({
-            where: { telegramId: telegramUser.id },
+            where: { telegramId: BigInt(telegramUser.id) },
             update: {},
             create: {
-                telegramId: telegramUser.id,
+                telegramId: BigInt(telegramUser.id),
                 username: telegramUser.username,
                 firstName: telegramUser.firstName,
                 lastName: telegramUser.lastName,
