@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 
 import { api } from '../services/api';
 import { Plus, Search, Filter, TrendingUp } from 'lucide-react';
+import useTelegramWebApp from '../hooks/useTelegramWebApp';
 
 interface Campaign {
     id: string;
@@ -23,6 +24,7 @@ interface Channel {
 
 export default function AdvertiserDashboard() {
     // const navigate = useNavigate();
+    const { user } = useTelegramWebApp();
     const [view, setView] = useState<'campaigns' | 'channels'>('campaigns');
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
     const [channels, setChannels] = useState<Channel[]>([]);
@@ -82,8 +84,17 @@ export default function AdvertiserDashboard() {
         <div className="pb-20">
             {/* Header */}
             <div className="bg-[#0088cc] text-white p-6">
-                <h1 className="text-2xl font-bold mb-2">Advertiser Dashboard</h1>
-                <p className="opacity-90">Find channels and run campaigns</p>
+                <div className="flex justify-between items-start mb-2">
+                    <h1 className="text-2xl font-bold">Advertiser Dashboard</h1>
+                    {user?.username && (
+                        <span className="bg-white/20 px-3 py-1 rounded-full text-sm">
+                            @{user.username}
+                        </span>
+                    )}
+                </div>
+                <p className="opacity-90">
+                    {user?.firstName ? `Welcome, ${user.firstName}!` : 'Find channels and run campaigns'}
+                </p>
             </div>
 
             {/* Stats */}

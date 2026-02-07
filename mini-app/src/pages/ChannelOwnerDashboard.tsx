@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { Plus, Users, TrendingUp, DollarSign, Settings } from 'lucide-react';
+import useTelegramWebApp from '../hooks/useTelegramWebApp';
 
 interface Channel {
     id: string;
@@ -27,6 +28,7 @@ interface Deal {
 
 export default function ChannelOwnerDashboard() {
     const navigate = useNavigate();
+    const { user } = useTelegramWebApp();
     const [channels, setChannels] = useState<Channel[]>([]);
     const [deals, setDeals] = useState<Deal[]>([]);
     const [loading, setLoading] = useState(true);
@@ -83,8 +85,17 @@ export default function ChannelOwnerDashboard() {
         <div className="pb-20">
             {/* Header */}
             <div className="bg-[#0088cc] text-white p-6">
-                <h1 className="text-2xl font-bold mb-2">Channel Owner Dashboard</h1>
-                <p className="opacity-90">Manage your channels and deals</p>
+                <div className="flex justify-between items-start mb-2">
+                    <h1 className="text-2xl font-bold">Channel Owner Dashboard</h1>
+                    {user?.username && (
+                        <span className="bg-white/20 px-3 py-1 rounded-full text-sm">
+                            @{user.username}
+                        </span>
+                    )}
+                </div>
+                <p className="opacity-90">
+                    {user?.firstName ? `Welcome, ${user.firstName}!` : 'Manage your channels and deals'}
+                </p>
             </div>
 
             {/* Stats */}
