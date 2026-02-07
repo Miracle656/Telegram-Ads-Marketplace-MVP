@@ -47,13 +47,22 @@ enum CreativeStatus {
   REJECTED
 }
 
+enum PaymentStatus {
+  PENDING
+  PAID
+  RELEASED
+  REFUNDED
+}
+
+
 model User {
-  id                String      @id @default(cuid())
-  telegramId        String      @unique
+  id                Int         @id @default(autoincrement())
+  telegramId        BigInt      @unique
   username          String?
   firstName         String?
   lastName          String?
   role              UserRole    @default(BOTH)
+  walletAddress     String?
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 
@@ -68,7 +77,8 @@ model User {
 }
 
 model Channel {
-  id                String      @id @default(cuid())
+  id                Int         @id @default(autoincrement())
+  telegramId        String      @unique
   telegramChannelId String      @unique
   title             String
   username          String?
@@ -76,11 +86,14 @@ model Channel {
   subscriberCount   Int         @default(0)
   averageViews      Int         @default(0)
   language          String?
+  category          String?
   isPremium         Boolean     @default(false)
   botAdded          Boolean     @default(false)
+  botIsAdmin        Boolean     @default(false)
   lastStatsUpdate   DateTime?
+  lastVerified      DateTime?
   isActive          Boolean     @default(true)
-  ownerId           String
+  ownerId           Int
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 
@@ -89,6 +102,7 @@ model Channel {
   admins            ChannelAdmin[]
   adFormats         ChannelAdFormat[]
   listings          ChannelListing[]
+  applications      CampaignApplication[]
   deals             Deal[]
   posts             Post[]
 
@@ -97,13 +111,12 @@ model Channel {
 }
 
 model ChannelAdmin {
-  id          String   @id @default(cuid())
-  channelId   String
-  userId      String
+  id          Int      @id @default(autoincrement())
+  channelId   Int
+  userId      Int
   canPost     Boolean  @default(true)
-  canManage   Boolean  @default(false)
-  addedAt     DateTime @default(now())
-  lastVerified DateTime @default(now())
+  canEdit     Boolean  @default(false)
+  createdAt   DateTime @default(now())
 
   // Relations
   channel     Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
@@ -114,13 +127,12 @@ model ChannelAdmin {
 }
 
 model ChannelAdFormat {
-  id          String    @id @default(cuid())
-  channelId   String
+  id          Int       @id @default(autoincrement())
+  channelId   Int
   format      AdFormat
-  customName  String?   // For CUSTOM format
-  price       Int       // In TON (smallest unit)
+  price       Float
   description String?
-  isActive    Boolean   @default(true)
+  isAvailable Boolean   @default(true)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -131,16 +143,14 @@ model ChannelAdFormat {
 }
 
 model Campaign {
-  id              String   @id @default(cuid())
+  id              Int      @id @default(autoincrement())
   title           String
-  brief           String
-  targetFormats   AdFormat[]
-  budget          Int      // In TON (smallest unit)
-  minSubscribers  Int?
-  minViews        Int?
-  preferredLanguage String?
+  description     String
+  budget          Float
+  targetAudience  String?
+  preferredFormats AdFormat[]
   isActive        Boolean  @default(true)
-  advertiserId    String
+  advertiserId    Int
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -153,48 +163,50 @@ model Campaign {
 }
 
 model CampaignApplication {
-  id           String   @id @default(cuid())
-  campaignId   String
-  listingId    String
+  id           Int      @id @default(autoincrement())
+  campaignId   Int
+  channelId    Int
+  proposedPrice Float
   message      String?
   status       String   @default("pending") // pending, accepted, rejected
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relations
   campaign     Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  listing      ChannelListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  channel      Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
 
   @@index([campaignId])
-  @@index([listingId])
+  @@index([channelId])
 }
 
 model ChannelListing {
-  id          String   @id @default(cuid())
-  channelId   String
-  isActive    Boolean  @default(true)
+  id          Int      @id @default(autoincrement())
+  channelId   Int
+  minBudget   Float?
+  targetNiches String[]
+  isPublic    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
   channel     Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  applications CampaignApplication[]
-  deals       Deal[]
 
   @@index([channelId])
 }
 
 model Deal {
-  id              String      @id @default(cuid())
-  channelId       String
-  channelOwnerId  String
-  advertiserId    String
-  campaignId      String?
-  listingId       String?
-  adFormatType    AdFormat
-  customFormatName String?
-  agreedPrice     Int         // In TON (smallest unit)
-  status          DealStatus  @default(NEGOTIATING)
+  id              Int         @id @default(autoincrement())
+  channelId       Int
+  channelOwnerId  Int
+  advertiserId    Int
+  campaignId      Int?
+  status         DealStatus  @default(NEGOTIATING)
+  agreedPrice     Float
+  adFormat        AdFormat
+  brief           String?
   scheduledPostTime DateTime?
+  completedAt     DateTime?
   lastActivityAt  DateTime    @default(now())
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
@@ -204,7 +216,6 @@ model Deal {
   owner           User        @relation("OwnerDeals", fields: [channelOwnerId], references: [id])
   advertiser      User        @relation("AdvertiserDeals", fields: [advertiserId], references: [id])
   campaign        Campaign?   @relation(fields: [campaignId], references: [id])
-  listing         ChannelListing? @relation(fields: [listingId], references: [id])
   payment         Payment?
   creatives       Creative[]
   post            Post?
@@ -216,15 +227,15 @@ model Deal {
 }
 
 model Creative {
-  id          String          @id @default(cuid())
-  dealId      String
+  id          Int             @id @default(autoincrement())
+  dealId      Int
   content     String
   mediaUrls   String[]
-  status      CreativeStatus  @default(DRAFT)
   version     Int             @default(1)
+  status      CreativeStatus  @default(DRAFT)
   feedback    String?
   submittedAt DateTime?
-  reviewedAt  DateTime?
+  approvedAt  DateTime?
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
@@ -236,16 +247,13 @@ model Creative {
 }
 
 model Payment {
-  id                String   @id @default(cuid())
-  dealId            String   @unique
-  escrowWallet      String   // TON wallet address for this deal
-  encryptedKey      String   // Encrypted wallet private key
-  amount            Int      // In TON (smallest unit)
-  paymentAddress    String?  // Address advertiser should send to
+  id                Int      @id @default(autoincrement())
+  dealId            Int      @unique
+  amount            Float
+  escrowWallet      String
+  encryptedKey      String
+  status            PaymentStatus @default(PENDING)
   transactionHash   String?
-  isPaid            Boolean  @default(false)
-  isReleased        Boolean  @default(false)
-  isRefunded        Boolean  @default(false)
   paidAt            DateTime?
   releasedAt        DateTime?
   refundedAt        DateTime?
@@ -256,26 +264,25 @@ model Payment {
   deal              Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
 
   @@index([dealId])
-  @@index([isPaid])
 }
 
 model Post {
-  id                String   @id @default(cuid())
-  dealId            String   @unique
+  id                Int      @id @default(autoincrement())
+  dealId            Int      @unique
+  messageId         String
   channelId         String
-  telegramMessageId Int
   postedAt          DateTime @default(now())
+  verificationStartedAt DateTime?
+  verifiedAt        DateTime?
   isDeleted         Boolean  @default(false)
   isEdited          Boolean  @default(false)
-  verifiedUntil     DateTime
-  lastCheckedAt     DateTime @default(now())
-  isVerified        Boolean  @default(false)
+  lastChecked       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
   
   // Relations
   deal              Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
-  channel           Channel  @relation(fields: [channelId], references: [id])
 
   @@index([dealId])
-  @@index([channelId])
-  @@index([verifiedUntil])
 }
+
