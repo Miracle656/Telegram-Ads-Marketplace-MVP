@@ -43,14 +43,6 @@ interface TelegramWebApp {
     showConfirm: (message: string, callback?: (confirmed: boolean) => void) => void;
 }
 
-declare global {
-    interface Window {
-        Telegram?: {
-            WebApp: TelegramWebApp;
-        };
-    }
-}
-
 export interface TelegramUser {
     id: number;
     firstName?: string;
