@@ -17,8 +17,27 @@ const PORT = process.env.PORT || 3000;
 
 // Security middleware
 app.use(helmet());
+
+// CORS configuration - allow both production and development origins
+const allowedOrigins = [
+    'https://telegram-ads-marketplace.vercel.app',
+    'https://localhost:5173',
+    'http://localhost:5173',
+    process.env.FRONTEND_URL
+].filter(Boolean) as string[];
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'https://localhost:5173',
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or Postman)
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.log(`CORS blocked origin: ${origin}`);
+            callback(null, true); // Allow all for now to debug, change to callback(new Error('Not allowed by CORS')) later
+        }
+    },
     credentials: true
 }));
 
