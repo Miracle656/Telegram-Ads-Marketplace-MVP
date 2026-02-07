@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { verifyAdminMiddleware } from '../middleware/admin-verification.middleware';
-import { fetchChannelStats, verifyBotIsAdmin, getChannelAdmins } from '../services/telegram.service';
+import { fetchChannelStats, verifyBotIsAdmin, getChannelAdmins, getChannelDetails } from '../services/telegram.service';
 import { z } from 'zod';
 
 const router = Router();
@@ -10,8 +10,8 @@ const prisma = new PrismaClient();
 
 // Validation schemas
 const createChannelSchema = z.object({
-    telegramChannelId: z.string(),
-    title: z.string(),
+    telegramChannelId: z.string().optional(),
+    title: z.string().optional(),
     username: z.string().optional(),
     description: z.string().optional()
 });
@@ -72,15 +72,36 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
 router.post('/', authMiddleware, async (req: Request, res: Response) => {
     try {
         const data = createChannelSchema.parse(req.body);
-        const telegramUser = (req as any).telegramUser;
+        // @ts-ignore - telegramUser is added by authMiddleware
+        const telegramUser = req.telegramUser;
 
-        // Verify bot is admin
-        if (data.username) {
-            const isBotAdmin = await verifyBotIsAdmin(data.username);
-            if (!isBotAdmin) {
-                res.status(400).json({ error: 'Please add the bot as an admin to your channel first' });
+        // Auto-resolve channel details if username provided
+        if (data.username && !data.telegramChannelId) {
+            try {
+                // Verify bot is admin first (and get details)
+                const isBotAdmin = await verifyBotIsAdmin(data.username);
+                if (!isBotAdmin) {
+                    res.status(400).json({ error: 'Please add the bot as an admin to your channel first' });
+                    return;
+                }
+
+                const details = await getChannelDetails(data.username);
+                data.telegramChannelId = details.id.toString();
+                data.title = data.title || details.title || data.username;
+                data.description = data.description || details.description;
+            } catch (error) {
+                res.status(400).json({ error: 'Could not resolve channel. Ensure bot is admin and username is correct.' });
                 return;
             }
+        }
+
+        if (!data.telegramChannelId) {
+            res.status(400).json({ error: 'Channel ID or Username is required' });
+            return;
+        }
+
+        if (!data.title) {
+            data.title = 'Untitled Channel';
         }
 
         // Fetch channel stats
@@ -106,15 +127,25 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
             }
         });
 
+        // Check if channel already exists
+        const existingChannel = await prisma.channel.findFirst({
+            where: { telegramChannelId: data.telegramChannelId }
+        });
+
+        if (existingChannel) {
+            res.status(400).json({ error: 'Channel already registered' });
+            return;
+        }
+
         // Create channel
         const channel = await prisma.channel.create({
             data: {
-                telegramChannelId: data.telegramChannelId,
-                title: data.title,
+                telegramChannelId: data.telegramChannelId!,
+                title: data.title!,
                 username: data.username,
                 description: data.description,
                 ownerId: user.id,
-                botAdded: data.username ? true : false,
+                botAdded: true, // We verified bot is admin or resolved ID
                 subscriberCount: stats?.subscriberCount || 0,
                 averageViews: stats?.averageViews || 0,
                 language: stats?.language,

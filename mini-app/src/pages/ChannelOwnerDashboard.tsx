@@ -125,39 +125,44 @@ export default function ChannelOwnerDashboard() {
                     <form onSubmit={handleAddChannel} className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 shadow-sm">
                         <h3 className="font-semibold mb-3">Add New Channel</h3>
                         <div className="space-y-3">
-                            <input
-                                type="text"
-                                placeholder="Channel ID (e.g., -1001234567890)"
-                                value={newChannel.telegramChannelId}
-                                onChange={(e) => setNewChannel({ ...newChannel, telegramChannelId: e.target.value })}
-                                className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
-                                required
-                            />
-                            <input
-                                type="text"
-                                placeholder="Channel Title"
-                                value={newChannel.title}
-                                onChange={(e) => setNewChannel({ ...newChannel, title: e.target.value })}
-                                className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
-                                required
-                            />
-                            <input
-                                type="text"
-                                placeholder="Username (without @)"
-                                value={newChannel.username}
-                                onChange={(e) => setNewChannel({ ...newChannel, username: e.target.value })}
-                                className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
-                            />
-                            <textarea
-                                placeholder="Description"
-                                value={newChannel.description}
-                                onChange={(e) => setNewChannel({ ...newChannel, description: e.target.value })}
-                                className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
-                                rows={3}
-                            />
-                            <div className="flex gap-2">
+                            <div>
+                                <label className="block text-xs text-gray-500 mb-1">Channel Username (Recommended)</label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-2 text-gray-400">@</span>
+                                    <input
+                                        type="text"
+                                        placeholder="username"
+                                        value={newChannel.username}
+                                        onChange={(e) => setNewChannel({ ...newChannel, username: e.target.value.replace('@', '') })}
+                                        className="w-full pl-7 pr-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                                    />
+                                </div>
+                                <p className="text-xs text-blue-500 mt-1">
+                                    Bot will auto-detect ID and Title if added as admin!
+                                </p>
+                            </div>
+
+                            <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+                                <p className="text-xs text-gray-400 mb-2">Or enter manually (if bot API fails):</p>
+                                <input
+                                    type="text"
+                                    placeholder="Channel ID (Optional if username provided)"
+                                    value={newChannel.telegramChannelId}
+                                    onChange={(e) => setNewChannel({ ...newChannel, telegramChannelId: e.target.value })}
+                                    className="w-full px-3 py-2 mb-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Channel Title (Optional)"
+                                    value={newChannel.title}
+                                    onChange={(e) => setNewChannel({ ...newChannel, title: e.target.value })}
+                                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                                />
+                            </div>
+
+                            <div className="flex gap-2 mt-4">
                                 <button type="submit" className="flex-1 tg-button py-2 rounded-lg">
-                                    Add Channel
+                                    Link Channel
                                 </button>
                                 <button
                                     type="button"

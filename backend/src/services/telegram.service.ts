@@ -48,6 +48,28 @@ export const fetchChannelStats = async (channelUsername: string): Promise<Channe
 };
 
 /**
+ * Get full channel details by username
+ */
+export const getChannelDetails = async (channelUsername: string) => {
+    const bot = getBot();
+    try {
+        const chat = await bot.getChat(`@${channelUsername}`);
+        if (chat.type !== 'channel') {
+            throw new Error('Not a channel');
+        }
+        return {
+            id: chat.id,
+            title: chat.title,
+            description: chat.description,
+            username: chat.username
+        };
+    } catch (error) {
+        console.error('Error fetching channel details:', error);
+        throw new Error('Failed to find channel. Make sure the bot is an admin.');
+    }
+};
+
+/**
  * Verify that the bot is an admin of the channel
  */
 export const verifyBotIsAdmin = async (channelUsername: string): Promise<boolean> => {
@@ -136,8 +158,6 @@ export const verifyPost = async (
     channelUsername: string,
     messageId: number
 ): Promise<{ exists: boolean; isEdited: boolean }> => {
-    const bot = getBot();
-
     try {
         // Note: This is a limitation - Telegram Bot API doesn't easily allow checking
         // specific messages unless you have them cached
