@@ -77,20 +77,29 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
 
         // Auto-resolve channel details if username provided
         if (data.username && !data.telegramChannelId) {
+            console.log(`[Channel] Resolving channel: ${data.username}`);
             try {
                 // Verify bot is admin first (and get details)
+                console.log(`[Channel] Checking if bot is admin of @${data.username}...`);
                 const isBotAdmin = await verifyBotIsAdmin(data.username);
+                console.log(`[Channel] Bot is admin: ${isBotAdmin}`);
+
                 if (!isBotAdmin) {
-                    res.status(400).json({ error: 'Please add the bot as an admin to your channel first' });
+                    res.status(400).json({ error: 'Bot is not an admin of this channel. Please add @telemartadsbot as an administrator first.' });
                     return;
                 }
 
+                console.log(`[Channel] Fetching channel details for @${data.username}...`);
                 const details = await getChannelDetails(data.username);
+                console.log(`[Channel] Got details:`, details);
+
                 data.telegramChannelId = details.id.toString();
                 data.title = data.title || details.title || data.username;
                 data.description = data.description || details.description;
-            } catch (error) {
-                res.status(400).json({ error: 'Could not resolve channel. Ensure bot is admin and username is correct.' });
+                console.log(`[Channel] Resolved: ID=${data.telegramChannelId}, Title=${data.title}`);
+            } catch (error: any) {
+                console.error('[Channel] Error resolving channel:', error.message);
+                res.status(400).json({ error: error.message || 'Could not resolve channel. Ensure bot is admin and username is correct.' });
                 return;
             }
         }
