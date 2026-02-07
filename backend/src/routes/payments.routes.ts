@@ -49,8 +49,7 @@ router.post('/initiate', authMiddleware, async (req: Request, res: Response) => 
                 dealId,
                 escrowWallet: address,
                 encryptedKey,
-                amount: deal.agreedPrice,
-                paymentAddress: address
+                amount: deal.agreedPrice
             }
         });
 
@@ -71,7 +70,7 @@ router.post('/initiate', authMiddleware, async (req: Request, res: Response) => 
 router.get('/:dealId/status', authMiddleware, async (req: Request, res: Response) => {
     try {
         const payment = await prisma.payment.findUnique({
-            where: { dealId: req.params.dealId }
+            where: { dealId: parseInt(req.params.dealId) }
         });
 
         if (!payment) {
@@ -80,9 +79,9 @@ router.get('/:dealId/status', authMiddleware, async (req: Request, res: Response
         }
 
         // Check blockchain for payment
-        if (!payment.isPaid && payment.paymentAddress) {
+        if (payment.status === 'PENDING') {
             const isPaid = await tonService.checkPayment(
-                payment.paymentAddress,
+                payment.escrowWallet,
                 BigInt(payment.amount)
             );
 
@@ -91,7 +90,7 @@ router.get('/:dealId/status', authMiddleware, async (req: Request, res: Response
                 await prisma.payment.update({
                     where: { id: payment.id },
                     data: {
-                        isPaid: true,
+                        status: 'PAID',
                         paidAt: new Date()
                     }
                 });
@@ -105,10 +104,10 @@ router.get('/:dealId/status', authMiddleware, async (req: Request, res: Response
         }
 
         res.json({
-            isPaid: payment.isPaid,
+            isPaid: payment.status === 'PAID' || payment.status === 'RELEASED',
             paidAt: payment.paidAt,
-            isReleased: payment.isReleased,
-            isRefunded: payment.isRefunded
+            isReleased: payment.status === 'RELEASED',
+            isRefunded: payment.status === 'REFUNDED'
         });
     } catch (error) {
         console.error('Error checking payment status:', error);
@@ -146,7 +145,7 @@ router.post('/:dealId/release', async (req: Request, res: Response) => {
         }
 
         const deal = await prisma.deal.findUnique({
-            where: { id: dealId },
+            where: { id: parseInt(dealId) },
             include: {
                 payment: true,
                 owner: true
@@ -158,7 +157,7 @@ router.post('/:dealId/release', async (req: Request, res: Response) => {
             return;
         }
 
-        if (deal.payment.isReleased) {
+        if (deal.payment.status === 'RELEASED') {
             res.status(400).json({ error: 'Funds already released' });
             return;
         }
@@ -179,7 +178,7 @@ router.post('/:dealId/release', async (req: Request, res: Response) => {
         await prisma.payment.update({
             where: { id: deal.payment.id },
             data: {
-                isReleased: true,
+                status: 'RELEASED',
                 releasedAt: new Date()
             }
         });

@@ -38,7 +38,7 @@ export class DealService {
         const deal = await prisma.deal.create({
             data: {
                 ...data,
-                adFormatType: data.adFormatType as any,
+                adFormat: data.adFormatType as any,
                 status: DealStatus.NEGOTIATING
             },
             include: {
@@ -52,13 +52,13 @@ export class DealService {
         await sendDealNotification(
             deal.owner.telegramId,
             `🎯 New deal created for ${deal.channel.title}!\nStatus: Negotiating`,
-            deal.id
+            String(deal.id)
         );
 
         await sendDealNotification(
             deal.advertiser.telegramId,
             `🎯 New deal created for ${deal.channel.title}!\nStatus: Negotiating`,
-            deal.id
+            String(deal.id)
         );
 
         return deal;
