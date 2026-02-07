@@ -1,0 +1,23 @@
+
+> telegram-ads-backend@1.0.0 build
+> tsc
+
+src/routes/channels.routes.ts(149,13): error TS2322: Type '{ telegramChannelId: string; title: string; username: string | undefined; description: string | undefined; ownerId: number; botAdded: true; subscriberCount: number; averageViews: number; language: string | undefined; isPremium: boolean; lastStatsUpdate: Date; }' is not assignable to type '(Without<ChannelCreateInput, ChannelUncheckedCreateInput> & ChannelUncheckedCreateInput) | (Without<...> & ChannelCreateInput)'.
+  Type '{ telegramChannelId: string; title: string; username: string | undefined; description: string | undefined; ownerId: number; botAdded: true; subscriberCount: number; averageViews: number; language: string | undefined; isPremium: boolean; lastStatsUpdate: Date; }' is not assignable to type 'Without<ChannelCreateInput, ChannelUncheckedCreateInput> & ChannelUncheckedCreateInput'.
+    Property 'telegramId' is missing in type '{ telegramChannelId: string; title: string; username: string | undefined; description: string | undefined; ownerId: number; botAdded: true; subscriberCount: number; averageViews: number; language: string | undefined; isPremium: boolean; lastStatsUpdate: Date; }' but required in type 'ChannelUncheckedCreateInput'.
+src/routes/channels.routes.ts(289,25): error TS2322: Type 'string' is not assignable to type 'number'.
+src/services/deal.service.ts(41,17): error TS2561: Object literal may only specify known properties, but 'adFormatType' does not exist in type '(Without<DealCreateInput, DealUncheckedCreateInput> & DealUncheckedCreateInput) | (Without<...> & DealCreateInput)'. Did you mean to write 'adFormat'?
+src/services/deal.service.ts(53,18): error TS2339: Property 'owner' does not exist on type '{ id: number; createdAt: Date; updatedAt: Date; channelId: number; status: DealStatus; brief: string | null; advertiserId: number; campaignId: number | null; channelOwnerId: number; ... 4 more ...; lastActivityAt: Date; }'.
+src/services/deal.service.ts(54,45): error TS2551: Property 'channel' does not exist on type '{ id: number; createdAt: Date; updatedAt: Date; channelId: number; status: DealStatus; brief: string | null; advertiserId: number; campaignId: number | null; channelOwnerId: number; ... 4 more ...; lastActivityAt: Date; }'. Did you mean 'channelId'?
+src/services/deal.service.ts(59,18): error TS2551: Property 'advertiser' does not exist on type '{ id: number; createdAt: Date; updatedAt: Date; channelId: number; status: DealStatus; brief: string | null; advertiserId: number; campaignId: number | null; channelOwnerId: number; ... 4 more ...; lastActivityAt: Date; }'. Did you mean 'advertiserId'?
+src/services/deal.service.ts(60,45): error TS2551: Property 'channel' does not exist on type '{ id: number; createdAt: Date; updatedAt: Date; channelId: number; status: DealStatus; brief: string | null; advertiserId: number; campaignId: number | null; channelOwnerId: number; ... 4 more ...; lastActivityAt: Date; }'. Did you mean 'channelId'?
+src/services/deal.service.ts(164,13): error TS2345: Argument of type 'bigint' is not assignable to parameter of type 'string'.
+src/services/deal.service.ts(170,13): error TS2345: Argument of type 'bigint' is not assignable to parameter of type 'string'.
+src/services/posting.service.ts(104,13): error TS2345: Argument of type 'string' is not assignable to parameter of type 'number'.
+npm error Lifecycle script `build` failed with error:
+npm error code 2
+npm error path C:\Users\HP\Documents\telegram\backend
+npm error workspace telegram-ads-backend@1.0.0
+npm error location C:\Users\HP\Documents\telegram\backend
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c tsc

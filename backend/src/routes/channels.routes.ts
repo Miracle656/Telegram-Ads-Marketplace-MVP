@@ -147,12 +147,13 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
         // Create channel
         const channel = await prisma.channel.create({
             data: {
+                telegramId: data.telegramChannelId!,
                 telegramChannelId: data.telegramChannelId!,
                 title: data.title!,
                 username: data.username,
                 description: data.description,
                 ownerId: user.id,
-                botAdded: true, // We verified bot is admin or resolved ID
+                botAdded: true,
                 subscriberCount: stats?.subscriberCount || 0,
                 averageViews: stats?.averageViews || 0,
                 language: stats?.language,
@@ -286,20 +287,17 @@ router.post('/:id/admins', authMiddleware, verifyAdminMiddleware, async (req: Re
             await prisma.channelAdmin.upsert({
                 where: {
                     channelId_userId: {
-                        channelId,
+                        channelId: parseInt(channelId),
                         userId: user.id
                     }
                 },
                 update: {
-                    canPost: admin.canPost,
-                    canManage: admin.canManage,
-                    lastVerified: new Date()
+                    canPost: admin.canPost
                 },
                 create: {
-                    channelId,
+                    channelId: parseInt(channelId),
                     userId: user.id,
-                    canPost: admin.canPost,
-                    canManage: admin.canManage
+                    canPost: admin.canPost
                 }
             });
         }

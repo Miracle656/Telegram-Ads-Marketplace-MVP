@@ -83,7 +83,6 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
                 title: data.title,
                 description: data.brief, // Use brief as description
                 budget: data.budget,
-                targetAudience: data.targetAudience,
                 preferredFormats: data.targetFormats,
                 advertiserId: user.id
             }

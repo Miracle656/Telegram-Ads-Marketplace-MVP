@@ -19,7 +19,7 @@ export const timeoutJob = cron.schedule('0 * * * *', async () => {
             console.log(`Cancelling timed-out deal: ${deal.id}`);
 
             // If payment exists and is paid, refund it
-            if (deal.payment && deal.payment.status === 'PAID') {
+            if (deal.payment && (deal.payment as any).status === 'PAID') {
                 try {
                     // TODO: Get advertiser wallet address from their profile
                     const advertiserWallet = 'ADVERTISER_WALLET_ADDRESS';

@@ -1,8 +1,29 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Deal, Post, Prisma } from '@prisma/client';
 import { postToChannel, verifyPost } from './telegram.service';
 import cron from 'node-cron';
 
 const prisma = new PrismaClient();
+
+// Helper interfaces to bypass potential stale client types
+interface DealWithCreatives {
+    id: number;
+    channelId: number;
+    channel: { username: string | null };
+    creatives: { content: string; mediaUrls: string[] }[];
+}
+
+interface PostWithChannel {
+    id: number;
+    dealId: number;
+    messageId: string;
+    channelId: string;
+    postedAt: Date;
+    verifiedAt: Date | null;
+    isDeleted: boolean;
+    isEdited: boolean;
+    lastChecked: Date | null;
+    channel: { username: string | null };
+}
 
 export class PostingService {
     /**
@@ -13,7 +34,7 @@ export class PostingService {
         scheduledTime: Date
     ): Promise<void> {
         await prisma.deal.update({
-            where: { id: dealId },
+            where: { id: parseInt(dealId) },
             data: { scheduledPostTime: scheduledTime }
         });
     }
@@ -23,7 +44,7 @@ export class PostingService {
      */
     async publishPost(dealId: string): Promise<number> {
         const deal = await prisma.deal.findUnique({
-            where: { id: dealId },
+            where: { id: parseInt(dealId) },
             include: {
                 channel: true,
                 creatives: {
@@ -32,7 +53,7 @@ export class PostingService {
                     take: 1
                 }
             }
-        });
+        }) as unknown as DealWithCreatives;
 
         if (!deal) {
             throw new Error('Deal not found');
@@ -65,10 +86,10 @@ export class PostingService {
         // Create post record
         await prisma.post.create({
             data: {
-                dealId,
-                channelId: deal.channelId,
-                telegramMessageId: messageId,
-                verifiedUntil
+                dealId: parseInt(dealId),
+                channelId: String(deal.channelId),
+                messageId: String(messageId),
+                postedAt: new Date()
             }
         });
 
@@ -83,9 +104,9 @@ export class PostingService {
         issues: string[];
     }> {
         const post = await prisma.post.findUnique({
-            where: { id: postId },
+            where: { id: parseInt(postId) },
             include: { channel: true }
-        });
+        }) as unknown as PostWithChannel;
 
         if (!post) {
             throw new Error('Post not found');
@@ -101,13 +122,13 @@ export class PostingService {
         // Check if post exists and hasn't been edited
         const { exists, isEdited } = await verifyPost(
             channelUsername,
-            post.telegramMessageId
+            parseInt(post.messageId)
         );
 
         if (!exists) {
             issues.push('Post has been deleted');
             await prisma.post.update({
-                where: { id: postId },
+                where: { id: parseInt(postId) },
                 data: { isDeleted: true }
             });
         }
@@ -115,15 +136,15 @@ export class PostingService {
         if (isEdited) {
             issues.push('Post has been edited');
             await prisma.post.update({
-                where: { id: postId },
+                where: { id: parseInt(postId) },
                 data: { isEdited: true }
             });
         }
 
         // Update last checked time
         await prisma.post.update({
-            where: { id: postId },
-            data: { lastCheckedAt: new Date() }
+            where: { id: parseInt(postId) },
+            data: { lastChecked: new Date() }
         });
 
         return {
@@ -137,20 +158,20 @@ export class PostingService {
      */
     async checkVerificationComplete(dealId: string): Promise<boolean> {
         const post = await prisma.post.findUnique({
-            where: { dealId }
-        });
+            where: { dealId: parseInt(dealId) }
+        }) as unknown as PostWithChannel;
 
         if (!post) {
             return false;
         }
 
         const now = new Date();
-        const isComplete = now >= post.verifiedUntil;
+        const isComplete = post.verifiedAt !== null;
 
         if (isComplete && !post.isDeleted && !post.isEdited) {
             await prisma.post.update({
                 where: { id: post.id },
-                data: { isVerified: true }
+                data: { verifiedAt: new Date() }
             });
             return true;
         }
@@ -175,7 +196,7 @@ export class PostingService {
 
         for (const deal of scheduledDeals) {
             try {
-                await this.publishPost(deal.id);
+                await this.publishPost(String(deal.id));
 
                 // Update deal status
                 await prisma.deal.update({

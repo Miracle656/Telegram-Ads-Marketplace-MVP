@@ -204,6 +204,7 @@ model Deal {
   status         DealStatus  @default(NEGOTIATING)
   agreedPrice     Float
   adFormat        AdFormat
+  customFormatName String?
   brief           String?
   scheduledPostTime DateTime?
   completedAt     DateTime?

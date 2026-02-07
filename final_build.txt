@@ -1,0 +1,16 @@
+
+> telegram-ads-backend@1.0.0 build
+> tsc
+
+src/services/deal.service.ts(44,17): error TS2353: Object literal may only specify known properties, and 'listingId' does not exist in type 'Without<DealCreateInput, DealUncheckedCreateInput> & DealUncheckedCreateInput'.
+src/services/deal.service.ts(59,18): error TS2339: Property 'owner' does not exist on type '{ id: number; createdAt: Date; updatedAt: Date; channelId: number; status: DealStatus; brief: string | null; advertiserId: number; campaignId: number | null; channelOwnerId: number; ... 4 more ...; lastActivityAt: Date; }'.
+src/services/deal.service.ts(60,45): error TS2551: Property 'channel' does not exist on type '{ id: number; createdAt: Date; updatedAt: Date; channelId: number; status: DealStatus; brief: string | null; advertiserId: number; campaignId: number | null; channelOwnerId: number; ... 4 more ...; lastActivityAt: Date; }'. Did you mean 'channelId'?
+src/services/deal.service.ts(65,18): error TS2551: Property 'advertiser' does not exist on type '{ id: number; createdAt: Date; updatedAt: Date; channelId: number; status: DealStatus; brief: string | null; advertiserId: number; campaignId: number | null; channelOwnerId: number; ... 4 more ...; lastActivityAt: Date; }'. Did you mean 'advertiserId'?
+src/services/deal.service.ts(66,45): error TS2551: Property 'channel' does not exist on type '{ id: number; createdAt: Date; updatedAt: Date; channelId: number; status: DealStatus; brief: string | null; advertiserId: number; campaignId: number | null; channelOwnerId: number; ... 4 more ...; lastActivityAt: Date; }'. Did you mean 'channelId'?
+npm error Lifecycle script `build` failed with error:
+npm error code 2
+npm error path C:\Users\HP\Documents\telegram\backend
+npm error workspace telegram-ads-backend@1.0.0
+npm error location C:\Users\HP\Documents\telegram\backend
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c tsc

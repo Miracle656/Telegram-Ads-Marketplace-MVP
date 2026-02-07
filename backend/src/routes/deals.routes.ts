@@ -173,7 +173,7 @@ router.post('/:id/creative', authMiddleware, verifyAdminMiddleware, async (req: 
             return;
         }
 
-        const version = deal.creatives.length + 1;
+        const version = (deal as any).creatives.length + 1;
 
         const creative = await prisma.creative.create({
             data: {
@@ -224,8 +224,7 @@ router.put('/:id/approve', authMiddleware, async (req: Request, res: Response) =
         await prisma.creative.update({
             where: { id: creative.id },
             data: {
-                status: CreativeStatus.APPROVED,
-                reviewedAt: new Date()
+                status: CreativeStatus.APPROVED
             }
         });
 
@@ -262,7 +261,7 @@ router.put('/:id/revise', authMiddleware, async (req: Request, res: Response) =>
 
         // Get latest creative
         const creative = await prisma.creative.findFirst({
-            where: { dealId },
+            where: { dealId: parseInt(dealId) },
             orderBy: { version: 'desc' }
         });
 
@@ -276,8 +275,7 @@ router.put('/:id/revise', authMiddleware, async (req: Request, res: Response) =>
             where: { id: creative.id },
             data: {
                 status: CreativeStatus.REVISION_REQUESTED,
-                feedback,
-                reviewedAt: new Date()
+                feedback
             }
         });
 

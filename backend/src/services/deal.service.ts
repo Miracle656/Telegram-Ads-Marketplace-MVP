@@ -1,4 +1,4 @@
-import { PrismaClient, DealStatus, Deal } from '@prisma/client';
+import { PrismaClient, DealStatus, Deal, Prisma, Payment } from '@prisma/client';
 import { sendDealNotification } from '../bot';
 
 const prisma = new PrismaClient();
@@ -21,6 +21,14 @@ const VALID_TRANSITIONS: Record<DealStatus, DealStatus[]> = {
     REFUNDED: []
 };
 
+type DealWithRelations = Prisma.DealGetPayload<{
+    include: {
+        channel: true;
+        owner: true;
+        advertiser: true;
+    }
+}>;
+
 export class DealService {
     /**
      * Create a new deal
@@ -37,8 +45,13 @@ export class DealService {
     }): Promise<Deal> {
         const deal = await prisma.deal.create({
             data: {
-                ...data,
+                channelId: parseInt(data.channelId),
+                channelOwnerId: parseInt(data.channelOwnerId),
+                advertiserId: parseInt(data.advertiserId),
+                campaignId: data.campaignId ? parseInt(data.campaignId) : null,
                 adFormat: data.adFormatType as any,
+                customFormatName: data.customFormatName,
+                agreedPrice: data.agreedPrice,
                 status: DealStatus.NEGOTIATING
             },
             include: {
@@ -46,17 +59,17 @@ export class DealService {
                 owner: true,
                 advertiser: true
             }
-        });
+        }) as unknown as DealWithRelations;
 
         // Notify both parties
         await sendDealNotification(
-            deal.owner.telegramId,
+            deal.owner.telegramId.toString(),
             `🎯 New deal created for ${deal.channel.title}!\nStatus: Negotiating`,
             String(deal.id)
         );
 
         await sendDealNotification(
-            deal.advertiser.telegramId,
+            deal.advertiser.telegramId.toString(),
             `🎯 New deal created for ${deal.channel.title}!\nStatus: Negotiating`,
             String(deal.id)
         );
@@ -69,7 +82,7 @@ export class DealService {
      */
     async transitionDeal(dealId: string, newStatus: DealStatus): Promise<Deal> {
         const deal = await prisma.deal.findUnique({
-            where: { id: dealId }
+            where: { id: parseInt(dealId) }
         });
 
         if (!deal) {
@@ -84,7 +97,7 @@ export class DealService {
 
         // Update deal
         const updatedDeal = await prisma.deal.update({
-            where: { id: dealId },
+            where: { id: parseInt(dealId) },
             data: {
                 status: newStatus,
                 lastActivityAt: new Date()
@@ -94,7 +107,7 @@ export class DealService {
                 owner: true,
                 advertiser: true
             }
-        });
+        }) as unknown as DealWithRelations;
 
         // Send notifications based on status
         await this.notifyStatusChange(updatedDeal);
@@ -107,7 +120,7 @@ export class DealService {
      */
     async updateActivity(dealId: string): Promise<void> {
         await prisma.deal.update({
-            where: { id: dealId },
+            where: { id: parseInt(dealId) },
             data: { lastActivityAt: new Date() }
         });
     }
@@ -141,33 +154,33 @@ export class DealService {
      */
     async cancelDeal(dealId: string, reason: string): Promise<Deal> {
         const deal = await prisma.deal.findUnique({
-            where: { id: dealId },
+            where: { id: parseInt(dealId) },
             include: { payment: true, owner: true, advertiser: true }
-        });
+        }) as unknown as (DealWithRelations & { payment: Payment | null });
 
         if (!deal) {
             throw new Error('Deal not found');
         }
 
         // If payment was made, initiate refund
-        if (deal.payment && deal.payment.isPaid && !deal.payment.isRefunded) {
+        if (deal.payment && (deal.payment as any).status === 'PAID') {
             // Refund will be handled by payment service
         }
 
         const updatedDeal = await prisma.deal.update({
-            where: { id: dealId },
+            where: { id: parseInt(dealId) },
             data: { status: DealStatus.CANCELLED }
         });
 
         // Notify both parties
         await sendDealNotification(
-            deal.owner.telegramId,
+            String(deal.owner.telegramId),
             `❌ Deal cancelled: ${reason}`,
             dealId
         );
 
         await sendDealNotification(
-            deal.advertiser.telegramId,
+            String(deal.advertiser.telegramId),
             `❌ Deal cancelled: ${reason}`,
             dealId
         );
@@ -178,7 +191,7 @@ export class DealService {
     /**
      * Send notifications based on status change
      */
-    private async notifyStatusChange(deal: Deal & { owner: any; advertiser: any; channel: any }): Promise<void> {
+    private async notifyStatusChange(deal: DealWithRelations): Promise<void> {
         const statusMessages: Record<DealStatus, { owner: string; advertiser: string }> = {
             NEGOTIATING: {
                 owner: '🤝 Deal in negotiation',
@@ -233,15 +246,15 @@ export class DealService {
         const messages = statusMessages[deal.status];
 
         await sendDealNotification(
-            deal.owner.telegramId,
+            deal.owner.telegramId.toString(),
             `${messages.owner}\n\nChannel: ${deal.channel.title}`,
-            deal.id
+            String(deal.id)
         );
 
         await sendDealNotification(
-            deal.advertiser.telegramId,
+            deal.advertiser.telegramId.toString(),
             `${messages.advertiser}\n\nChannel: ${deal.channel.title}`,
-            deal.id
+            String(deal.id)
         );
     }
 }

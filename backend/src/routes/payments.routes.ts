@@ -30,7 +30,7 @@ router.post('/initiate', authMiddleware, async (req: Request, res: Response) => 
             return;
         }
 
-        if (deal.payment) {
+        if ((deal as any).payment) {
             res.status(400).json({ error: 'Payment already initiated' });
             return;
         }
@@ -79,7 +79,7 @@ router.get('/:dealId/status', authMiddleware, async (req: Request, res: Response
         }
 
         // Check blockchain for payment
-        if (payment.status === 'PENDING') {
+        if ((payment as any).status === 'PENDING') {
             const isPaid = await tonService.checkPayment(
                 payment.escrowWallet,
                 BigInt(payment.amount)
@@ -104,10 +104,10 @@ router.get('/:dealId/status', authMiddleware, async (req: Request, res: Response
         }
 
         res.json({
-            isPaid: payment.status === 'PAID' || payment.status === 'RELEASED',
+            isPaid: (payment as any).status === 'PAID' || (payment as any).status === 'RELEASED',
             paidAt: payment.paidAt,
-            isReleased: payment.status === 'RELEASED',
-            isRefunded: payment.status === 'REFUNDED'
+            isReleased: (payment as any).status === 'RELEASED',
+            isRefunded: (payment as any).status === 'REFUNDED'
         });
     } catch (error) {
         console.error('Error checking payment status:', error);
@@ -152,12 +152,12 @@ router.post('/:dealId/release', async (req: Request, res: Response) => {
             }
         });
 
-        if (!deal || !deal.payment) {
+        if (!deal || !(deal as any).payment) {
             res.status(404).json({ error: 'Deal or payment not found' });
             return;
         }
 
-        if (deal.payment.status === 'RELEASED') {
+        if ((deal as any).payment.status === 'RELEASED') {
             res.status(400).json({ error: 'Funds already released' });
             return;
         }
@@ -168,15 +168,15 @@ router.post('/:dealId/release', async (req: Request, res: Response) => {
 
         // Release funds
         await tonService.releaseFunds(
-            deal.payment.escrowWallet,
-            deal.payment.encryptedKey,
+            (deal as any).payment.escrowWallet,
+            (deal as any).payment.encryptedKey,
             ownerWalletAddress,
-            BigInt(deal.payment.amount)
+            BigInt((deal as any).payment.amount)
         );
 
         // Update payment
         await prisma.payment.update({
-            where: { id: deal.payment.id },
+            where: { id: (deal as any).payment.id },
             data: {
                 status: 'RELEASED',
                 releasedAt: new Date()

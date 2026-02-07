@@ -1,0 +1,20 @@
+
+> telegram-ads-backend@1.0.0 build
+> tsc
+
+src/services/deal.service.ts(39,13): error TS2322: Type '{ adFormat: any; status: "NEGOTIATING"; channelId: string; channelOwnerId: string; advertiserId: string; campaignId?: string; listingId?: string; adFormatType: string; customFormatName?: string; agreedPrice: number; }' is not assignable to type '(Without<DealCreateInput, DealUncheckedCreateInput> & DealUncheckedCreateInput) | (Without<...> & DealCreateInput)'.
+  Type '{ adFormat: any; status: "NEGOTIATING"; channelId: string; channelOwnerId: string; advertiserId: string; campaignId?: string; listingId?: string; adFormatType: string; customFormatName?: string; agreedPrice: number; }' is not assignable to type 'Without<DealUncheckedCreateInput, DealCreateInput> & DealCreateInput'.
+    Type '{ adFormat: any; status: "NEGOTIATING"; channelId: string; channelOwnerId: string; advertiserId: string; campaignId?: string; listingId?: string; adFormatType: string; customFormatName?: string; agreedPrice: number; }' is not assignable to type 'Without<DealUncheckedCreateInput, DealCreateInput>'.
+      Types of property 'channelId' are incompatible.
+        Type 'string' is not assignable to type 'undefined'.
+src/services/deal.service.ts(53,18): error TS2339: Property 'owner' does not exist on type '{ id: number; createdAt: Date; updatedAt: Date; channelId: number; status: DealStatus; brief: string | null; advertiserId: number; campaignId: number | null; channelOwnerId: number; ... 4 more ...; lastActivityAt: Date; }'.
+src/services/deal.service.ts(54,45): error TS2551: Property 'channel' does not exist on type '{ id: number; createdAt: Date; updatedAt: Date; channelId: number; status: DealStatus; brief: string | null; advertiserId: number; campaignId: number | null; channelOwnerId: number; ... 4 more ...; lastActivityAt: Date; }'. Did you mean 'channelId'?
+src/services/deal.service.ts(59,18): error TS2551: Property 'advertiser' does not exist on type '{ id: number; createdAt: Date; updatedAt: Date; channelId: number; status: DealStatus; brief: string | null; advertiserId: number; campaignId: number | null; channelOwnerId: number; ... 4 more ...; lastActivityAt: Date; }'. Did you mean 'advertiserId'?
+src/services/deal.service.ts(60,45): error TS2551: Property 'channel' does not exist on type '{ id: number; createdAt: Date; updatedAt: Date; channelId: number; status: DealStatus; brief: string | null; advertiserId: number; campaignId: number | null; channelOwnerId: number; ... 4 more ...; lastActivityAt: Date; }'. Did you mean 'channelId'?
+npm error Lifecycle script `build` failed with error:
+npm error code 2
+npm error path C:\Users\HP\Documents\telegram\backend
+npm error workspace telegram-ads-backend@1.0.0
+npm error location C:\Users\HP\Documents\telegram\backend
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c tsc
