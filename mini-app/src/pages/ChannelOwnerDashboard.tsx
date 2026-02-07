@@ -82,7 +82,7 @@ export default function ChannelOwnerDashboard() {
     return (
         <div className="pb-20">
             {/* Header */}
-            <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6">
+            <div className="bg-[#0088cc] text-white p-6">
                 <h1 className="text-2xl font-bold mb-2">Channel Owner Dashboard</h1>
                 <p className="opacity-90">Manage your channels and deals</p>
             </div>
@@ -172,31 +172,40 @@ export default function ChannelOwnerDashboard() {
                 )}
 
                 <div className="space-y-3">
-                    {channels.map((channel) => (
-                        <div key={channel.id} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-                            <div className="flex justify-between items-start mb-2">
-                                <div>
-                                    <h3 className="font-semibold">{channel.title}</h3>
-                                    {channel.username && (
-                                        <p className="text-sm text-gray-600 dark:text-gray-400">@{channel.username}</p>
-                                    )}
-                                </div>
-                                <button className="text-gray-400 hover:text-gray-600">
-                                    <Settings className="w-5 h-5" />
-                                </button>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4 mt-3">
-                                <div>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">Subscribers</p>
-                                    <p className="font-semibold">{channel.subscriberCount.toLocaleString()}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">Avg. Views</p>
-                                    <p className="font-semibold">{channel.averageViews.toLocaleString()}</p>
-                                </div>
-                            </div>
+                    {channels.length === 0 ? (
+                        <div className="text-center p-8 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+                            <p className="text-gray-500 mb-2">No channels linked yet</p>
+                            <p className="text-xs text-gray-400 max-w-xs mx-auto mb-4">
+                                To link a channel, add this bot as an admin to your channel, then click "Add Channel" above.
+                            </p>
                         </div>
-                    ))}
+                    ) : (
+                        channels.map((channel) => (
+                            <div key={channel.id} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+                                <div className="flex justify-between items-start mb-2">
+                                    <div>
+                                        <h3 className="font-semibold">{channel.title}</h3>
+                                        {channel.username && (
+                                            <p className="text-sm text-gray-600 dark:text-gray-400">@{channel.username}</p>
+                                        )}
+                                    </div>
+                                    <button className="text-gray-400 hover:text-gray-600">
+                                        <Settings className="w-5 h-5" />
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 mt-3">
+                                    <div>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">Subscribers</p>
+                                        <p className="font-semibold">{channel.subscriberCount.toLocaleString()}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">Avg. Views</p>
+                                        <p className="font-semibold">{channel.averageViews.toLocaleString()}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
 
@@ -218,8 +227,8 @@ export default function ChannelOwnerDashboard() {
                                     </p>
                                 </div>
                                 <span className={`px-3 py-1 rounded-full text-xs ${deal.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
-                                        deal.status === 'POSTED' ? 'bg-blue-100 text-blue-800' :
-                                            'bg-yellow-100 text-yellow-800'
+                                    deal.status === 'POSTED' ? 'bg-blue-100 text-blue-800' :
+                                        'bg-yellow-100 text-yellow-800'
                                     }`}>
                                     {deal.status.replace('_', ' ')}
                                 </span>

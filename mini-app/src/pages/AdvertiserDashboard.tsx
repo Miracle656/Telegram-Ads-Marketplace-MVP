@@ -23,7 +23,7 @@ interface Channel {
 
 export default function AdvertiserDashboard() {
     // const navigate = useNavigate();
-    const [view, setView] = useState<'campaigns' | 'channels'>('channels');
+    const [view, setView] = useState<'campaigns' | 'channels'>('campaigns');
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
     const [channels, setChannels] = useState<Channel[]>([]);
     const [loading, setLoading] = useState(true);
@@ -81,7 +81,7 @@ export default function AdvertiserDashboard() {
     return (
         <div className="pb-20">
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-6">
+            <div className="bg-[#0088cc] text-white p-6">
                 <h1 className="text-2xl font-bold mb-2">Advertiser Dashboard</h1>
                 <p className="opacity-90">Find channels and run campaigns</p>
             </div>

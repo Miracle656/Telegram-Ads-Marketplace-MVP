@@ -5,6 +5,7 @@ import ChannelOwnerDashboard from './pages/ChannelOwnerDashboard';
 import AdvertiserDashboard from './pages/AdvertiserDashboard';
 import DealFlow from './pages/DealFlow';
 import { Spinner, AppRoot } from '@telegram-apps/telegram-ui';
+import { User, Megaphone } from 'lucide-react';
 import '@telegram-apps/telegram-ui/dist/styles.css';
 
 function App() {
@@ -13,6 +14,11 @@ function App() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (webApp) {
+            webApp.ready();
+            webApp.expand();
+        }
+
         if (user) {
             // User detected, set default role to owner
             setRole('owner');
@@ -22,24 +28,23 @@ function App() {
             const timer = setTimeout(() => {
                 setRole('owner');
                 setLoading(false);
-            }, 1500);
+            }, 1000);
             return () => clearTimeout(timer);
         }
-    }, [user]);
+    }, [user, webApp]);
 
     if (loading) {
         return (
             <AppRoot>
                 <div
-                    className="min-h-screen flex items-center justify-center"
+                    className="min-h-screen flex items-center justify-center bg-white dark:bg-black"
                     style={{
-                        backgroundColor: webApp?.themeParams.bg_color || '#ffffff',
-                        color: webApp?.themeParams.text_color || '#000000'
+                        backgroundColor: webApp?.themeParams.bg_color,
+                        color: webApp?.themeParams.text_color
                     }}
                 >
-                    <div className="text-center">
+                    <div className="flex flex-col items-center">
                         <Spinner size="l" />
-                        <p className="mt-4 text-sm opacity-70">Loading your marketplace...</p>
                     </div>
                 </div>
             </AppRoot>
@@ -50,19 +55,12 @@ function App() {
         <AppRoot>
             <BrowserRouter>
                 <div
-                    className="min-h-screen"
+                    className="min-h-screen pb-24" // Added padding bottom to prevent content hiding behind navigation
                     style={{
                         backgroundColor: webApp?.themeParams.bg_color || '#ffffff',
                         color: webApp?.themeParams.text_color || '#000000'
                     }}
                 >
-                    {/* User Info Display (if available) */}
-                    {user && (
-                        <div className="fixed top-2 left-2 z-50 text-xs opacity-50 bg-black bg-opacity-20 rounded px-2 py-1">
-                            {user.username ? `@${user.username}` : user.firstName || 'User'}
-                        </div>
-                    )}
-
                     <Routes>
                         <Route path="/" element={
                             role === 'owner' ? <Navigate to="/owner" /> : <Navigate to="/advertiser" />
@@ -72,26 +70,30 @@ function App() {
                         <Route path="/deals/:id" element={<DealFlow />} />
                     </Routes>
 
-                    {/* Enhanced Role switcher */}
-                    <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 bg-white dark:bg-gray-800 rounded-full shadow-lg p-1">
-                        <button
-                            onClick={() => setRole('owner')}
-                            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${role === 'owner'
-                                    ? 'bg-blue-500 text-white shadow-md'
-                                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                                }`}
-                        >
-                            👤 Channel Owner
-                        </button>
-                        <button
-                            onClick={() => setRole('advertiser')}
-                            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${role === 'advertiser'
-                                    ? 'bg-blue-500 text-white shadow-md'
-                                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                                }`}
-                        >
-                            📢 Advertiser
-                        </button>
+                    {/* Sleek Role Switcher */}
+                    <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+                        <div className="flex p-1 gap-1 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-full shadow-lg">
+                            <button
+                                onClick={() => setRole('owner')}
+                                className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${role === 'owner'
+                                        ? 'bg-[#0088cc] text-white shadow-md transform scale-105'
+                                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                    }`}
+                            >
+                                <User size={18} strokeWidth={2} />
+                                <span>Owner</span>
+                            </button>
+                            <button
+                                onClick={() => setRole('advertiser')}
+                                className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${role === 'advertiser'
+                                        ? 'bg-[#0088cc] text-white shadow-md transform scale-105'
+                                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                    }`}
+                            >
+                                <Megaphone size={18} strokeWidth={2} />
+                                <span>Advertiser</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </BrowserRouter>
