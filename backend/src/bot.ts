@@ -52,14 +52,14 @@ export const initBot = async (): Promise<TelegramBot> => {
 
             // Create or update user
             await prisma.user.upsert({
-                where: { telegramId },
+                where: { telegramId: BigInt(telegramId) },
                 update: {
                     username: msg.from?.username,
                     firstName: msg.from?.first_name,
                     lastName: msg.from?.last_name
                 },
                 create: {
-                    telegramId,
+                    telegramId: BigInt(telegramId),
                     username: msg.from?.username,
                     firstName: msg.from?.first_name,
                     lastName: msg.from?.last_name

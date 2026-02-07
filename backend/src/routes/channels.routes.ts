@@ -40,9 +40,7 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
                 owner: {
                     select: { username: true, firstName: true }
                 },
-                adFormats: {
-                    where: { isAvailable: true }
-                }
+                adFormats: true
             },
             skip,
             take: limit,
@@ -149,7 +147,6 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
         // Create channel
         const channel = await prisma.channel.create({
             data: {
-                telegramId: data.telegramChannelId!,
                 telegramChannelId: data.telegramChannelId!,
                 title: data.title!,
                 username: data.username,
@@ -232,15 +229,14 @@ router.put('/:id/pricing', authMiddleware, verifyAdminMiddleware, async (req: Re
 
         // Delete existing formats
         await prisma.channelAdFormat.deleteMany({
-            where: { channelId }
+            where: { channelId: parseInt(channelId) }
         });
 
         // Create new formats
         const formats = await prisma.channelAdFormat.createMany({
             data: data.formats.map(f => ({
-                channelId,
+                channelId: parseInt(channelId),
                 format: f.format as any,
-                customName: f.customName,
                 price: f.price,
                 description: f.description
             }))

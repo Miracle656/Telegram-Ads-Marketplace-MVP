@@ -44,16 +44,6 @@ export const verifyAdminMiddleware = async (
             return;
         }
 
-        // Update last verified timestamp
-        await prisma.channelAdmin.updateMany({
-            where: {
-                channelId,
-                userId: telegramUser.id
-            },
-            data: {
-                lastVerified: new Date()
-            }
-        });
 
         next();
     } catch (error) {

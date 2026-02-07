@@ -80,7 +80,11 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
 
         const campaign = await prisma.campaign.create({
             data: {
-                ...data,
+                title: data.title,
+                description: data.brief, // Use brief as description
+                budget: data.budget,
+                targetAudience: data.targetAudience,
+                preferredFormats: data.targetFormats,
                 advertiserId: user.id
             }
         });
@@ -112,8 +116,8 @@ router.post('/:id/apply', authMiddleware, async (req: Request, res: Response) =>
         // Check if already applied
         const existing = await prisma.campaignApplication.findFirst({
             where: {
-                campaignId,
-                listingId
+                campaignId: parseInt(campaignId),
+                channelId: parseInt(listingId)
             }
         });
 
@@ -124,8 +128,9 @@ router.post('/:id/apply', authMiddleware, async (req: Request, res: Response) =>
 
         const application = await prisma.campaignApplication.create({
             data: {
-                campaignId,
-                listingId,
+                campaignId: parseInt(campaignId),
+                channelId: parseInt(listingId),
+                proposedPrice: 0, // Default price
                 message
             }
         });
@@ -143,15 +148,11 @@ router.post('/:id/apply', authMiddleware, async (req: Request, res: Response) =>
 router.get('/:id/applications', authMiddleware, async (req: Request, res: Response) => {
     try {
         const applications = await prisma.campaignApplication.findMany({
-            where: { campaignId: req.params.id },
+            where: { campaignId: parseInt(req.params.id) },
             include: {
-                listing: {
+                channel: {
                     include: {
-                        channel: {
-                            include: {
-                                adFormats: true
-                            }
-                        }
+                        adFormats: true
                     }
                 }
             },

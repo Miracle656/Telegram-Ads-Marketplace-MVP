@@ -82,7 +82,7 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
 
         // Get channel owner
         const channel = await prisma.channel.findUnique({
-            where: { id: data.channelId }
+            where: { id: parseInt(data.channelId) }
         });
 
         if (!channel) {
@@ -92,7 +92,7 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
 
         const deal = await dealService.createDeal({
             ...data,
-            channelOwnerId: channel.ownerId
+            channelOwnerId: String(channel.ownerId)
         });
 
         res.status(201).json(deal);
@@ -164,7 +164,7 @@ router.post('/:id/creative', authMiddleware, verifyAdminMiddleware, async (req: 
         const dealId = req.params.id;
 
         const deal = await prisma.deal.findUnique({
-            where: { id: dealId },
+            where: { id: parseInt(dealId) },
             include: { creatives: true }
         });
 
@@ -177,7 +177,7 @@ router.post('/:id/creative', authMiddleware, verifyAdminMiddleware, async (req: 
 
         const creative = await prisma.creative.create({
             data: {
-                dealId,
+                dealId: parseInt(dealId),
                 content: data.content,
                 mediaUrls: data.mediaUrls || [],
                 version,
