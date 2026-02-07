@@ -56,22 +56,30 @@ const validateTelegramWebAppData = (initData: string): TelegramWebAppInitData | 
 export const authMiddleware = (req: Request, res: Response, next: NextFunction): void => {
     try {
         const initData = req.headers['x-telegram-init-data'] as string;
+        console.log(`[Auth] Request to ${req.path}, initData present: ${!!initData}, length: ${initData?.length || 0}`);
 
         if (!initData) {
+            console.log('[Auth] Missing authentication data');
             res.status(401).json({ error: 'Missing authentication data' });
             return;
         }
 
         const validatedData = validateTelegramWebAppData(initData);
+        console.log(`[Auth] Validation result: ${validatedData ? 'valid' : 'invalid'}, user: ${validatedData?.user?.username || 'unknown'}`);
 
         if (!validatedData || !validatedData.user) {
+            console.log('[Auth] Invalid authentication data');
             res.status(401).json({ error: 'Invalid authentication data' });
             return;
         }
 
         // Check if auth is not too old (24 hours)
         const now = Math.floor(Date.now() / 1000);
-        if (now - validatedData.auth_date > 86400) {
+        const age = now - validatedData.auth_date;
+        console.log(`[Auth] Auth age: ${age}s (max: 86400s)`);
+
+        if (age > 86400) {
+            console.log('[Auth] Authentication data expired');
             res.status(401).json({ error: 'Authentication data expired' });
             return;
         }
@@ -83,9 +91,11 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction):
             firstName: validatedData.user.first_name,
             lastName: validatedData.user.last_name
         };
+        console.log(`[Auth] Authenticated user: ${validatedData.user.id} (@${validatedData.user.username})`);
 
         next();
-    } catch (error) {
+    } catch (error: any) {
+        console.error('[Auth] Error:', error.message);
         res.status(500).json({ error: 'Authentication error' });
     }
 };
