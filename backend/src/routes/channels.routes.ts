@@ -41,7 +41,7 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
                     select: { username: true, firstName: true }
                 },
                 adFormats: {
-                    where: { isActive: true }
+                    where: { isAvailable: true }
                 }
             },
             skip,
@@ -149,6 +149,7 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
         // Create channel
         const channel = await prisma.channel.create({
             data: {
+                telegramId: data.telegramChannelId!,
                 telegramChannelId: data.telegramChannelId!,
                 title: data.title!,
                 username: data.username,
@@ -187,7 +188,7 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
 router.get('/:id/stats', authMiddleware, async (req: Request, res: Response) => {
     try {
         const channel = await prisma.channel.findUnique({
-            where: { id: req.params.id }
+            where: { id: parseInt(req.params.id) }
         });
 
         if (!channel) {
@@ -204,7 +205,7 @@ router.get('/:id/stats', authMiddleware, async (req: Request, res: Response) => 
 
         // Update channel with latest stats
         await prisma.channel.update({
-            where: { id: req.params.id },
+            where: { id: parseInt(req.params.id) },
             data: {
                 subscriberCount: stats.subscriberCount,
                 averageViews: stats.averageViews,
@@ -263,7 +264,7 @@ router.post('/:id/admins', authMiddleware, verifyAdminMiddleware, async (req: Re
     try {
         const channelId = req.params.id;
         const channel = await prisma.channel.findUnique({
-            where: { id: channelId }
+            where: { id: parseInt(channelId) }
         });
 
         if (!channel || !channel.username) {

@@ -282,6 +282,7 @@ model Post {
   
   // Relations
   deal              Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  channel           Channel  @relation(fields: [channelId], references: [telegramChannelId])
 
   @@index([dealId])
 }
