@@ -29,11 +29,11 @@ export const verificationJob = cron.schedule('*/15 * * * *', async () => {
 
             try {
                 // Check if verification period is complete
-                const isComplete = await postingService.checkVerificationComplete(deal.id);
+                const isComplete = await postingService.checkVerificationComplete(String(deal.id));
 
                 if (isComplete) {
                     // Verify post integrity one last time
-                    const { isValid, issues } = await postingService.verifyPostIntegrity(deal.post.id);
+                    const { isValid, issues } = await postingService.verifyPostIntegrity(String(deal.post.id));
 
                     if (isValid) {
                         console.log(`✅ Post verified for deal ${deal.id}, releasing funds...`);
@@ -55,7 +55,7 @@ export const verificationJob = cron.schedule('*/15 * * * *', async () => {
                         console.log(`⚠️ Post integrity issues for deal ${deal.id}:`, issues);
 
                         // Transition to REFUNDED and refund advertiser
-                        await dealService.transitionDeal(deal.id, DealStatus.REFUNDED);
+                        await dealService.transitionDeal(String(deal.id), DealStatus.REFUNDED);
 
                         if (deal.payment) {
                             // Refund logic would go here
@@ -79,7 +79,7 @@ export const verificationJob = cron.schedule('*/15 * * * *', async () => {
 
         for (const deal of postedDeals) {
             if (deal.post) {
-                await dealService.transitionDeal(deal.id, DealStatus.VERIFYING);
+                await dealService.transitionDeal(String(deal.id), DealStatus.VERIFYING);
             }
         }
 

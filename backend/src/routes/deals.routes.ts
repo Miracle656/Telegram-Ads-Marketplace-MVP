@@ -112,7 +112,7 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
 router.get('/:id', authMiddleware, async (req: Request, res: Response) => {
     try {
         const deal = await prisma.deal.findUnique({
-            where: { id: req.params.id },
+            where: { id: parseInt(req.params.id) },
             include: {
                 channel: {
                     include: {
@@ -211,7 +211,7 @@ router.put('/:id/approve', authMiddleware, async (req: Request, res: Response) =
 
         // Get latest creative
         const creative = await prisma.creative.findFirst({
-            where: { dealId },
+            where: { dealId: parseInt(dealId) },
             orderBy: { version: 'desc' }
         });
 

@@ -19,7 +19,7 @@ export const timeoutJob = cron.schedule('0 * * * *', async () => {
             console.log(`Cancelling timed-out deal: ${deal.id}`);
 
             // If payment exists and is paid, refund it
-            if (deal.payment && deal.payment.isPaid && !deal.payment.isRefunded) {
+            if (deal.payment && deal.payment.status === 'PAID') {
                 try {
                     // TODO: Get advertiser wallet address from their profile
                     const advertiserWallet = 'ADVERTISER_WALLET_ADDRESS';
@@ -34,7 +34,7 @@ export const timeoutJob = cron.schedule('0 * * * *', async () => {
                     await prisma.payment.update({
                         where: { id: deal.payment.id },
                         data: {
-                            isRefunded: true,
+                            status: 'REFUNDED',
                             refundedAt: new Date()
                         }
                     });
@@ -46,7 +46,7 @@ export const timeoutJob = cron.schedule('0 * * * *', async () => {
             }
 
             // Cancel the deal
-            await dealService.cancelDeal(deal.id, 'Deal timed out due to inactivity');
+            await dealService.cancelDeal(String(deal.id), 'Deal timed out due to inactivity');
         }
 
         console.log(`✅ Timeout job completed. Processed ${timedOutDeals.length} deals`);
