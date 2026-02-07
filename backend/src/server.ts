@@ -15,6 +15,9 @@ dotenv.config();
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy - MUST be before rate limiter
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 
@@ -48,6 +51,7 @@ const limiter = rateLimit({
     message: 'Too many requests from this IP, please try again later.'
 });
 app.use('/api/', limiter);
+
 
 // Body parsers
 app.use(express.json());
