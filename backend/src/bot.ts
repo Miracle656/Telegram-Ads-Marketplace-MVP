@@ -13,10 +13,14 @@ export const initBot = async (): Promise<TelegramBot> => {
     // First, try to stop any existing webhooks/polling to clear conflicts
     const tempBot = new TelegramBot(token);
     try {
-        await tempBot.deleteWebHook();
+        // Use a 5s timeout to prevent hanging on startup
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Webhook deletion timed out')), 5000)
+        );
+        await Promise.race([tempBot.deleteWebHook(), timeoutPromise]);
         console.log('Cleared any existing webhooks');
     } catch (e) {
-        console.log('Could not clear webhooks:', e);
+        console.log('Could not clear webhooks (or timed out):', e);
     }
 
     // Create bot - use polling only in development, or if explicitly enabled

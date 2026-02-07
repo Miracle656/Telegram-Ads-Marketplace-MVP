@@ -82,22 +82,43 @@ app.use((req: Request, res: Response) => {
     res.status(404).json({ error: 'Route not found' });
 });
 
+// Global error handlers
+process.on('uncaughtException', (error) => {
+    console.error('UNCAUGHT EXCEPTION:', error);
+});
+
+process.on('unhandledRejection', (reason) => {
+    console.error('UNHANDLED REJECTION:', reason);
+});
+
+console.log('Starting application...');
+
 // Start server
-app.listen(PORT, async () => {
+const server = app.listen(Number(PORT), '0.0.0.0', async () => {
     console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV}`);
 
     // Initialize Telegram Bot
     try {
-        await initBot();
-        console.log('✅ Telegram Bot initialized');
+        console.log('Initializing Telegram Bot...');
+        // Don't await initBot to block the server startup callback if it hangs
+        initBot().then(() => {
+            console.log('✅ Telegram Bot initialized');
+        }).catch((error) => {
+            console.error('❌ Failed to initialize Telegram Bot:', error);
+        });
     } catch (error) {
-        console.error('❌ Failed to initialize Telegram Bot:', error);
+        console.error('❌ Failed to initiate Telegram Bot setup:', error);
     }
 
     // Start cron jobs
     if (process.env.ENABLE_CRON_JOBS === 'true') {
-        startCronJobs();
-        console.log('✅ Cron jobs started');
+        try {
+            startCronJobs();
+            console.log('✅ Cron jobs started');
+        } catch (error) {
+            console.error('❌ Failed to start cron jobs:', error);
+        }
     }
 });
 
