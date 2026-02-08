@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-
+import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { Plus, Search, Filter, TrendingUp } from 'lucide-react';
 import useTelegramWebApp from '../hooks/useTelegramWebApp';
@@ -23,7 +23,7 @@ interface Channel {
 }
 
 export default function AdvertiserDashboard() {
-    // const navigate = useNavigate();
+    const navigate = useNavigate();
     const { user } = useTelegramWebApp();
     const [view, setView] = useState<'campaigns' | 'channels'>('campaigns');
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -73,6 +73,37 @@ export default function AdvertiserDashboard() {
         } catch (error: any) {
             console.error('Error creating campaign:', error);
             alert(error.response?.data?.error || 'Failed to create campaign');
+        }
+    };
+
+    const handleCreateDeal = async (channel: Channel, campaignId?: string) => {
+        if (!campaignId && campaigns.length === 0) {
+            alert('Please create a campaign first before creating a deal');
+            setView('campaigns');
+            setShowCreateCampaign(true);
+            return;
+        }
+
+        // If no campaign selected and have campaigns, use the first one
+        const targetCampaignId = campaignId || (campaigns.length > 0 ? campaigns[0].id : null);
+
+        if (!targetCampaignId) {
+            alert('No campaign available');
+            return;
+        }
+
+        try {
+            const response = await api.deals.create({
+                channelId: channel.id,
+                campaignId: targetCampaignId,
+                format: channel.adFormats[0]?.format || 'POST',
+                price: channel.adFormats[0]?.price || 1000000000 // Default 1 TON
+            });
+
+            navigate(`/deals/${response.data.id}`);
+        } catch (error: any) {
+            console.error('Error creating deal:', error);
+            alert(error.response?.data?.error || 'Failed to create deal');
         }
     };
 
@@ -177,7 +208,10 @@ export default function AdvertiserDashboard() {
                                     </div>
                                 )}
 
-                                <button className="w-full tg-button py-2 rounded-lg text-sm">
+                                <button
+                                    onClick={() => handleCreateDeal(channel)}
+                                    className="w-full tg-button py-2 rounded-lg text-sm"
+                                >
                                     Create Deal
                                 </button>
                             </div>

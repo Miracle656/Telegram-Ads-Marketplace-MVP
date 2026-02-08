@@ -150,6 +150,7 @@ model Campaign {
   budget          Float
   targetAudience  String?
   preferredFormats AdFormat[]
+  minSubscribers  Int?
   isActive        Boolean  @default(true)
   advertiserId    Int
   createdAt       DateTime @default(now())

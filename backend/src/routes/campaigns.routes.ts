@@ -84,6 +84,7 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
                 description: data.brief, // Use brief as description
                 budget: data.budget,
                 preferredFormats: data.targetFormats,
+                minSubscribers: data.minSubscribers,
                 advertiserId: user.id
             }
         });
