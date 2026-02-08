@@ -140,6 +140,7 @@ model ChannelAdFormat {
   channel     Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
 
   @@index([channelId])
+  @@unique([channelId, format])
 }
 
 model Campaign {
