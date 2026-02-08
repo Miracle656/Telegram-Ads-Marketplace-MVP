@@ -21,12 +21,23 @@ const createCampaignSchema = z.object({
  */
 router.get('/', authMiddleware, async (req: Request, res: Response) => {
     try {
+        const telegramUser = (req as any).telegramUser;
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 20;
         const skip = (page - 1) * limit;
 
+        // Find the current user
+        const user = await prisma.user.findUnique({
+            where: { telegramId: BigInt(telegramUser.id) }
+        });
+
+        // Only show user's own campaigns
+        const whereClause = user
+            ? { isActive: true, advertiserId: user.id }
+            : { isActive: true };
+
         const campaigns = await prisma.campaign.findMany({
-            where: { isActive: true },
+            where: whereClause,
             include: {
                 advertiser: {
                     select: { username: true, firstName: true }
@@ -40,7 +51,7 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
             orderBy: { createdAt: 'desc' }
         });
 
-        const total = await prisma.campaign.count({ where: { isActive: true } });
+        const total = await prisma.campaign.count({ where: whereClause });
 
         res.json({
             campaigns,

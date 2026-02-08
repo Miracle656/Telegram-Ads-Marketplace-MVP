@@ -80,6 +80,19 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
         const data = createDealSchema.parse(req.body);
         const telegramUser = (req as any).telegramUser;
 
+        // Get or create the advertiser user
+        const advertiser = await prisma.user.upsert({
+            where: { telegramId: BigInt(telegramUser.id) },
+            update: {},
+            create: {
+                telegramId: BigInt(telegramUser.id),
+                username: telegramUser.username,
+                firstName: telegramUser.firstName,
+                lastName: telegramUser.lastName,
+                role: 'ADVERTISER'
+            }
+        });
+
         // Get channel owner
         const channel = await prisma.channel.findUnique({
             where: { id: parseInt(data.channelId) }
@@ -91,8 +104,13 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
         }
 
         const deal = await dealService.createDeal({
-            ...data,
-            channelOwnerId: String(channel.ownerId)
+            channelId: data.channelId,
+            channelOwnerId: String(channel.ownerId),
+            advertiserId: String(advertiser.id), // Use database ID, not Telegram ID
+            campaignId: data.campaignId,
+            adFormatType: data.adFormatType,
+            customFormatName: data.customFormatName,
+            agreedPrice: data.agreedPrice
         });
 
         res.status(201).json(deal);
