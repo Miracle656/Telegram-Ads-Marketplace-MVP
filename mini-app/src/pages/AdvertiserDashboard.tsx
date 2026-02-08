@@ -94,10 +94,11 @@ export default function AdvertiserDashboard() {
 
         try {
             const response = await api.deals.create({
-                channelId: channel.id,
-                campaignId: targetCampaignId,
-                format: channel.adFormats[0]?.format || 'POST',
-                price: channel.adFormats[0]?.price || 1000000000 // Default 1 TON
+                channelId: String(channel.id),
+                advertiserId: String(user?.id || ''),
+                campaignId: String(targetCampaignId),
+                adFormatType: channel.adFormats[0]?.format || 'POST',
+                agreedPrice: channel.adFormats[0]?.price || 1000000000 // Default 1 TON
             });
 
             navigate(`/deals/${response.data.id}`);
