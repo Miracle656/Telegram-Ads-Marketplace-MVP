@@ -33,6 +33,9 @@ export default function AdvertiserDashboard() {
     const [showCreateCampaign, setShowCreateCampaign] = useState(false);
     const [showCreateDeal, setShowCreateDeal] = useState(false);
     const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
+    const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+    const [campaignDeals, setCampaignDeals] = useState<any[]>([]);
+    const [loadingDeals, setLoadingDeals] = useState(false);
     const [dealPrice, setDealPrice] = useState<number>(1);
 
     const [newCampaign, setNewCampaign] = useState({
@@ -60,6 +63,23 @@ export default function AdvertiserDashboard() {
             console.error('Error loading data:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleCampaignClick = async (campaign: Campaign) => {
+        setSelectedCampaign(campaign);
+        setLoadingDeals(true);
+        try {
+            // Fetch all deals and filter by campaign ID
+            // In a real app, we should have an endpoint for this
+            const res = await api.deals.list();
+            const allDeals = res.data || [];
+            const filtered = allDeals.filter((d: any) => d.campaignId === campaign.id);
+            setCampaignDeals(filtered);
+        } catch (error) {
+            console.error('Error loading deals:', error);
+        } finally {
+            setLoadingDeals(false);
         }
     };
 
@@ -303,7 +323,11 @@ export default function AdvertiserDashboard() {
 
                     <div className="space-y-3">
                         {campaigns.map((campaign) => (
-                            <div key={campaign.id} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+                            <div
+                                key={campaign.id}
+                                onClick={() => handleCampaignClick(campaign)}
+                                className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition"
+                            >
                                 <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">{campaign.title}</h3>
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{campaign.brief}</p>
                                 <div className="flex justify-between items-center text-sm">
@@ -363,6 +387,71 @@ export default function AdvertiserDashboard() {
                                 Create Deal
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Campaign Details Modal */}
+            {selectedCampaign && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-sm max-h-[80vh] overflow-y-auto">
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{selectedCampaign.title}</h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    Budget: {(selectedCampaign.budget / 1000000000).toFixed(2)} TON
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setSelectedCampaign(null)}
+                                className="text-gray-400 hover:text-gray-600"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <h4 className="font-semibold mb-2 text-gray-900 dark:text-white">Active Deals</h4>
+                        {loadingDeals ? (
+                            <div className="flex justify-center p-4">
+                                <Spinner size="s" />
+                            </div>
+                        ) : campaignDeals.length > 0 ? (
+                            <div className="space-y-3">
+                                {campaignDeals.map((deal) => (
+                                    <div
+                                        key={deal.id}
+                                        onClick={() => navigate(`/deals/${deal.id}`)}
+                                        className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                                    >
+                                        <div className="flex justify-between items-center mb-1">
+                                            <span className="font-medium text-gray-900 dark:text-white">
+                                                {deal.channel?.title || 'Unknown Channel'}
+                                            </span>
+                                            <span className={`px-2 py-0.5 rounded-full text-[10px] ${deal.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                                                deal.status === 'POSTED' ? 'bg-blue-100 text-blue-800' :
+                                                    'bg-yellow-100 text-yellow-800'
+                                                }`}>
+                                                {deal.status.replace('_', ' ')}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                                            {(deal.agreedPrice / 1000000000).toFixed(2)} TON
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                                No deals yet. Go to "Browse Channels" to create one!
+                            </p>
+                        )}
+
+                        <button
+                            onClick={() => setSelectedCampaign(null)}
+                            className="w-full mt-6 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white"
+                        >
+                            Close
+                        </button>
                     </div>
                 </div>
             )}
