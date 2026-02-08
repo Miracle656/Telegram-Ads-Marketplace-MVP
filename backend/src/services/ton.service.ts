@@ -1,8 +1,21 @@
-import { Address, TonClient, WalletContractV4, internal, fromNano, toNano } from '@ton/ton';
+import { Address, TonClient, WalletContractV4, internal, fromNano, toNano, beginCell, Cell } from '@ton/ton';
 import { mnemonicNew, mnemonicToPrivateKey } from '@ton/crypto';
 import CryptoJS from 'crypto-js';
 
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'default-key-change-this';
+
+// Escrow contract deployed on testnet
+const ESCROW_CONTRACT_ADDRESS = 'kQDhMrwyCrN4nfvROwnyp4xDCkt8UwacuXiDy4IXSpwjAxVR';
+
+// Escrow status constants matching the contract
+export const EscrowStatus = {
+    EMPTY: 0,
+    FUNDED: 1,
+    RELEASED: 2,
+    REFUNDED: 3,
+} as const;
+
+export type EscrowStatusType = typeof EscrowStatus[keyof typeof EscrowStatus];
 
 export class TonService {
     private client: TonClient;
@@ -158,6 +171,110 @@ export class TonService {
      */
     fromNanoton(nanoton: bigint): string {
         return fromNano(nanoton);
+    }
+
+    // ==================== ESCROW CONTRACT METHODS ====================
+
+    /**
+     * Get the escrow contract address
+     */
+    getEscrowContractAddress(): string {
+        return ESCROW_CONTRACT_ADDRESS;
+    }
+
+    /**
+     * Get escrow contract status
+     */
+    async getEscrowStatus(): Promise<EscrowStatusType> {
+        const contractAddress = Address.parse(ESCROW_CONTRACT_ADDRESS);
+        const result = await this.client.runMethod(contractAddress, 'getStatus');
+        return result.stack.readNumber() as EscrowStatusType;
+    }
+
+    /**
+     * Get escrow deal ID
+     */
+    async getEscrowDealId(): Promise<bigint> {
+        const contractAddress = Address.parse(ESCROW_CONTRACT_ADDRESS);
+        const result = await this.client.runMethod(contractAddress, 'getDealId');
+        return result.stack.readBigNumber();
+    }
+
+    /**
+     * Get escrow amount
+     */
+    async getEscrowAmount(): Promise<bigint> {
+        const contractAddress = Address.parse(ESCROW_CONTRACT_ADDRESS);
+        const result = await this.client.runMethod(contractAddress, 'getAmount');
+        return result.stack.readBigNumber();
+    }
+
+    /**
+     * Get status name from status code
+     */
+    getEscrowStatusName(status: EscrowStatusType): string {
+        switch (status) {
+            case EscrowStatus.EMPTY: return 'Empty';
+            case EscrowStatus.FUNDED: return 'Funded';
+            case EscrowStatus.RELEASED: return 'Released';
+            case EscrowStatus.REFUNDED: return 'Refunded';
+            default: return 'Unknown';
+        }
+    }
+
+    /**
+     * Build InitEscrow message body for the contract
+     */
+    buildInitEscrowMessage(
+        dealId: bigint,
+        advertiserAddress: string,
+        beneficiaryAddress: string,
+        amountNano: bigint
+    ): Cell {
+        return beginCell()
+            .storeUint(0x01, 8) // opcode: InitEscrow
+            .storeUint(dealId, 64)
+            .storeAddress(Address.parse(advertiserAddress))
+            .storeAddress(Address.parse(beneficiaryAddress))
+            .storeCoins(amountNano)
+            .endCell();
+    }
+
+    /**
+     * Build Deposit message body
+     */
+    buildDepositMessage(): Cell {
+        return beginCell()
+            .storeUint(0x02, 8) // opcode: Deposit
+            .endCell();
+    }
+
+    /**
+     * Build Release message body
+     */
+    buildReleaseMessage(): Cell {
+        return beginCell()
+            .storeUint(0x03, 8) // opcode: Release
+            .endCell();
+    }
+
+    /**
+     * Build Refund message body
+     */
+    buildRefundMessage(): Cell {
+        return beginCell()
+            .storeUint(0x04, 8) // opcode: Refund
+            .endCell();
+    }
+
+    /**
+     * Generate a deposit link for the advertiser
+     */
+    generateDepositLink(amountTon: number): string {
+        const amountNano = toNano(amountTon.toString());
+        const body = this.buildDepositMessage();
+        const bodyBase64 = body.toBoc().toString('base64');
+        return `ton://transfer/${ESCROW_CONTRACT_ADDRESS}?amount=${amountNano}&bin=${bodyBase64}`;
     }
 }
 

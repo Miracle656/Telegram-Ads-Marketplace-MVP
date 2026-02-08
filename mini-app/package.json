@@ -11,6 +11,8 @@
     },
     "dependencies": {
         "@telegram-apps/telegram-ui": "^2.1.13",
+        "@ton/core": "^0.63.0",
+        "@tonconnect/ui-react": "^2.4.1",
         "@twa-dev/sdk": "^7.0.0",
         "axios": "^1.6.5",
         "lucide-react": "^0.309.0",

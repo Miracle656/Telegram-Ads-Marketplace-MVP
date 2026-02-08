@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { ArrowLeft, CheckCircle, Send, Edit } from 'lucide-react';
+import { useEscrow } from '../hooks/useEscrow';
+import { ArrowLeft, CheckCircle, Send, Edit, ArrowRight } from 'lucide-react';
 
 interface Deal {
     id: string;
@@ -39,6 +40,30 @@ export default function DealFlow() {
     const [loading, setLoading] = useState(true);
     const [creativeContent, setCreativeContent] = useState('');
     const [feedback, setFeedback] = useState('');
+    const { deposit, loading: escrowLoading, error: escrowError } = useEscrow();
+
+    const handlePayment = async () => {
+        if (!deal) return;
+        try {
+            // Amount in TON
+            const amount = deal.agreedPrice / 1000000000;
+
+            // Initiate payment record in backend first if not exists
+            if (!deal.payment) {
+                await api.payments.initiate(deal.id);
+            }
+
+            // Trigger wallet transaction
+            await deposit(amount);
+
+            // Reload deal to check status (might need polling or websocket in real app)
+            loadDeal();
+            alert('Payment initiated! Please wait for confirmation.');
+        } catch (error) {
+            console.error('Payment failed:', error);
+            // Error handling is managed by hook state
+        }
+    };
 
     useEffect(() => {
         if (id) {
@@ -176,16 +201,38 @@ export default function DealFlow() {
             </div>
 
             {/* Payment Section */}
-            {deal.status === 'AWAITING_PAYMENT' && deal.payment && !deal.payment.isPaid && (
+            {deal.status === 'AWAITING_PAYMENT' && !deal.payment?.isPaid && (
                 <div className="p-4">
-                    <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
-                        <h3 className="font-semibold mb-2">Payment Required</h3>
-                        <p className="text-sm mb-3">Send {(deal.agreedPrice / 1000000000).toFixed(2)} TON to:</p>
-                        <code className="bg-white dark:bg-gray-800 px-3 py-2 rounded text-xs block break-all">
-                            {deal.payment.paymentAddress}
-                        </code>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-                            Funds will be held in escrow until post verification
+                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-100 dark:border-blue-800">
+                        <h3 className="font-semibold mb-2 flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                            Payment Required
+                        </h3>
+                        <p className="text-sm mb-4 text-gray-600 dark:text-gray-300">
+                            Deposit <b>{(deal.agreedPrice / 1000000000).toFixed(2)} TON</b> to escrow to start the deal.
+                        </p>
+
+                        <button
+                            onClick={handlePayment}
+                            disabled={escrowLoading}
+                            className="w-full bg-[#0088cc] text-white py-3 rounded-xl font-medium shadow-lg shadow-blue-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                        >
+                            {escrowLoading ? (
+                                <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
+                            ) : (
+                                <>
+                                    <span>Pay with TON</span>
+                                    <ArrowRight className="w-4 h-4" />
+                                </>
+                            )}
+                        </button>
+
+                        {escrowError && (
+                            <p className="text-xs text-red-500 mt-2 text-center">{escrowError}</p>
+                        )}
+
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 text-center">
+                            Funds are held safely in the smart contract until the ad is posted.
                         </p>
                     </div>
                 </div>

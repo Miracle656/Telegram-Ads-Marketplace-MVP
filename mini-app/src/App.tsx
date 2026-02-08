@@ -6,6 +6,7 @@ import AdvertiserDashboard from './pages/AdvertiserDashboard';
 import DealFlow from './pages/DealFlow';
 import { Spinner, AppRoot } from '@telegram-apps/telegram-ui';
 import { User, Megaphone } from 'lucide-react';
+import { TonConnectButton } from '@tonconnect/ui-react';
 import '@telegram-apps/telegram-ui/dist/styles.css';
 
 // Inner component that can use navigation hooks (must be inside BrowserRouter)
@@ -74,7 +75,7 @@ function AppContent() {
                 <Route path="/deals/:id" element={<DealFlow />} />
             </Routes>
 
-            {/* Sleek Role Switcher */}
+            {/* Role Switcher */}
             <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
                 <div className="flex p-1 gap-1 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-full shadow-lg">
                     <button
@@ -98,6 +99,11 @@ function AppContent() {
                         <span>Advertiser</span>
                     </button>
                 </div>
+            </div>
+
+            {/* TON Connect Button */}
+            <div className="fixed top-4 right-4 z-50">
+                <TonConnectButton />
             </div>
         </div>
     );

@@ -59,7 +59,12 @@ export const api = {
     // Payments
     payments: {
         initiate: (dealId: string) => apiClient.post('/payments/initiate', { dealId }),
-        getStatus: (dealId: string) => apiClient.get(`/payments/${dealId}/status`)
+        getStatus: (dealId: string) => apiClient.get(`/payments/${dealId}/status`),
+        // Escrow endpoints
+        getEscrowInfo: () => apiClient.get('/payments/escrow/info'),
+        getEscrowStatus: () => apiClient.get('/payments/escrow/status'),
+        getDepositLink: (amountTon: number) => apiClient.post('/payments/escrow/deposit-link', { amountTon }),
+        getContractAddress: () => apiClient.get('/payments/escrow/contract')
     }
 };
 

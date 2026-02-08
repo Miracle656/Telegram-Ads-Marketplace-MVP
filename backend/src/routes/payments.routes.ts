@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient, DealStatus } from '@prisma/client';
 import { authMiddleware } from '../middleware/auth.middleware';
-import { tonService } from '../services/ton.service';
+import { tonService, EscrowStatus } from '../services/ton.service';
 import { dealService } from '../services/deal.service';
 
 const router = Router();
@@ -191,6 +191,116 @@ router.post('/:dealId/release', async (req: Request, res: Response) => {
         console.error('Error releasing funds:', error);
         res.status(500).json({ error: 'Failed to release funds' });
     }
+});
+
+// ==================== ESCROW CONTRACT ENDPOINTS ====================
+
+/**
+ * GET /api/payments/escrow/info - Get escrow contract information
+ */
+router.get('/escrow/info', async (req: Request, res: Response) => {
+    try {
+        const [status, dealId, amount] = await Promise.all([
+            tonService.getEscrowStatus(),
+            tonService.getEscrowDealId(),
+            tonService.getEscrowAmount(),
+        ]);
+
+        res.json({
+            success: true,
+            data: {
+                contractAddress: tonService.getEscrowContractAddress(),
+                status: status,
+                statusName: tonService.getEscrowStatusName(status),
+                dealId: dealId.toString(),
+                amount: tonService.fromNanoton(amount),
+                amountNano: amount.toString(),
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching escrow info:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch escrow information'
+        });
+    }
+});
+
+/**
+ * GET /api/payments/escrow/status - Get current escrow status
+ */
+router.get('/escrow/status', async (req: Request, res: Response) => {
+    try {
+        const status = await tonService.getEscrowStatus();
+
+        res.json({
+            success: true,
+            data: {
+                status: status,
+                statusName: tonService.getEscrowStatusName(status),
+                isFunded: status === EscrowStatus.FUNDED,
+                isCompleted: status === EscrowStatus.RELEASED || status === EscrowStatus.REFUNDED,
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching escrow status:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch escrow status'
+        });
+    }
+});
+
+/**
+ * POST /api/payments/escrow/deposit-link - Generate a deposit link for advertiser
+ */
+router.post('/escrow/deposit-link', async (req: Request, res: Response) => {
+    try {
+        const { amountTon } = req.body;
+
+        if (!amountTon || typeof amountTon !== 'number' || amountTon <= 0) {
+            res.status(400).json({
+                success: false,
+                error: 'Invalid amount. Must be a positive number in TON.'
+            });
+            return;
+        }
+
+        const depositLink = tonService.generateDepositLink(amountTon);
+        const contractAddress = tonService.getEscrowContractAddress();
+        const amountNano = tonService.toNanoton(amountTon);
+
+        res.json({
+            success: true,
+            data: {
+                depositLink,
+                contractAddress,
+                amountTon,
+                amountNano: amountNano.toString(),
+                instructions: 'Open this link in Tonkeeper or scan the QR code to deposit funds into escrow.'
+            }
+        });
+    } catch (error) {
+        console.error('Error generating deposit link:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to generate deposit link'
+        });
+    }
+});
+
+/**
+ * GET /api/payments/escrow/contract - Get escrow contract address
+ */
+router.get('/escrow/contract', (req: Request, res: Response) => {
+    res.json({
+        success: true,
+        data: {
+            contractAddress: tonService.getEscrowContractAddress(),
+            network: process.env.TON_NETWORK === 'mainnet' ? 'mainnet' : 'testnet',
+            explorerUrl: `https://testnet.tonscan.org/address/${tonService.getEscrowContractAddress()}`
+        }
+    });
 });
 
 export default router;
