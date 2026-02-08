@@ -154,7 +154,7 @@ export default function DealFlow() {
             <div className="p-4">
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
-                        <span className="text-sm font-semibold">Status</span>
+                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Status</span>
                         <span className="px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                             {deal.status.replace(/_/g, ' ')}
                         </span>
@@ -164,7 +164,7 @@ export default function DealFlow() {
                         <div className="flex items-start gap-3">
                             <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
                             <div>
-                                <p className="font-semibold">Deal Created</p>
+                                <p className="font-semibold text-gray-900 dark:text-white">Deal Created</p>
                                 <p className="text-gray-600 dark:text-gray-400">
                                     {(deal.agreedPrice / 1000000000).toFixed(2)} TON for {deal.adFormatType}
                                 </p>
@@ -175,7 +175,7 @@ export default function DealFlow() {
                             <div className="flex items-start gap-3">
                                 <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
                                 <div>
-                                    <p className="font-semibold">Payment Received</p>
+                                    <p className="font-semibold text-gray-900 dark:text-white">Payment Received</p>
                                 </div>
                             </div>
                         )}
@@ -184,7 +184,7 @@ export default function DealFlow() {
                             <div className="flex items-start gap-3">
                                 <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
                                 <div>
-                                    <p className="font-semibold">Creative Submitted</p>
+                                    <p className="font-semibold text-gray-900 dark:text-white">Creative Submitted</p>
                                     <p className="text-gray-600 dark:text-gray-400">Version {latestCreative.version}</p>
                                 </div>
                             </div>
@@ -194,7 +194,7 @@ export default function DealFlow() {
                             <div className="flex items-start gap-3">
                                 <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
                                 <div>
-                                    <p className="font-semibold">Post Published</p>
+                                    <p className="font-semibold text-gray-900 dark:text-white">Post Published</p>
                                     <p className="text-gray-600 dark:text-gray-400">
                                         {new Date(deal.post.postedAt).toLocaleString()}
                                     </p>

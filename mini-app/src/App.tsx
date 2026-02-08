@@ -23,6 +23,13 @@ function AppContent() {
         if (webApp) {
             webApp.ready();
             webApp.expand();
+
+            // Apply dark mode class based on Telegram theme
+            if (webApp.colorScheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
         }
 
         if (user) {

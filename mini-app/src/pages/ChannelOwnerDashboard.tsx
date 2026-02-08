@@ -107,17 +107,17 @@ export default function ChannelOwnerDashboard() {
             <div className="grid grid-cols-3 gap-3 p-4">
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
                     <Users className="w-5 h-5 text-blue-600 mb-2" />
-                    <p className="text-2xl font-bold">{channels.length}</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{channels.length}</p>
                     <p className="text-xs text-gray-600 dark:text-gray-400">Channels</p>
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
                     <TrendingUp className="w-5 h-5 text-green-600 mb-2" />
-                    <p className="text-2xl font-bold">{deals.length}</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{deals.length}</p>
                     <p className="text-xs text-gray-600 dark:text-gray-400">Active Deals</p>
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
                     <DollarSign className="w-5 h-5 text-yellow-600 mb-2" />
-                    <p className="text-2xl font-bold">
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
                         {deals.reduce((sum, d) => sum + d.agreedPrice, 0) / 1000000000}
                     </p>
                     <p className="text-xs text-gray-600 dark:text-gray-400">TON Earned</p>
@@ -127,7 +127,7 @@ export default function ChannelOwnerDashboard() {
             {/* Channels */}
             <div className="p-4">
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-lg font-semibold">My Channels</h2>
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">My Channels</h2>
                     <button
                         onClick={() => setShowAddChannel(!showAddChannel)}
                         className="flex items-center gap-2 tg-button px-4 py-2 rounded-lg text-sm"
@@ -139,7 +139,7 @@ export default function ChannelOwnerDashboard() {
 
                 {showAddChannel && (
                     <form onSubmit={handleAddChannel} className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 shadow-sm">
-                        <h3 className="font-semibold mb-3">Add New Channel</h3>
+                        <h3 className="font-semibold mb-3 text-gray-900 dark:text-white">Add New Channel</h3>
                         <div className="space-y-3">
                             <div>
                                 <label className="block text-xs text-gray-500 mb-1">Channel Username (Recommended)</label>
@@ -150,7 +150,7 @@ export default function ChannelOwnerDashboard() {
                                         placeholder="username"
                                         value={newChannel.username}
                                         onChange={(e) => setNewChannel({ ...newChannel, username: e.target.value.replace('@', '') })}
-                                        className="w-full pl-7 pr-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                                        className="w-full pl-7 pr-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                     />
                                 </div>
                                 <p className="text-xs text-blue-500 mt-1">
@@ -165,14 +165,14 @@ export default function ChannelOwnerDashboard() {
                                     placeholder="Channel ID (Optional if username provided)"
                                     value={newChannel.telegramChannelId}
                                     onChange={(e) => setNewChannel({ ...newChannel, telegramChannelId: e.target.value })}
-                                    className="w-full px-3 py-2 mb-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                                    className="w-full px-3 py-2 mb-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                 />
                                 <input
                                     type="text"
                                     placeholder="Channel Title (Optional)"
                                     value={newChannel.title}
                                     onChange={(e) => setNewChannel({ ...newChannel, title: e.target.value })}
-                                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                 />
                             </div>
 
@@ -205,7 +205,7 @@ export default function ChannelOwnerDashboard() {
                             <div key={channel.id} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
                                 <div className="flex justify-between items-start mb-2">
                                     <div>
-                                        <h3 className="font-semibold">{channel.title}</h3>
+                                        <h3 className="font-semibold text-gray-900 dark:text-white">{channel.title}</h3>
                                         {channel.username && (
                                             <p className="text-sm text-gray-600 dark:text-gray-400">@{channel.username}</p>
                                         )}
@@ -217,11 +217,11 @@ export default function ChannelOwnerDashboard() {
                                 <div className="grid grid-cols-2 gap-4 mt-3">
                                     <div>
                                         <p className="text-sm text-gray-600 dark:text-gray-400">Subscribers</p>
-                                        <p className="font-semibold">{channel.subscriberCount.toLocaleString()}</p>
+                                        <p className="font-semibold text-gray-900 dark:text-white">{channel.subscriberCount.toLocaleString()}</p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-600 dark:text-gray-400">Avg. Views</p>
-                                        <p className="font-semibold">{channel.averageViews.toLocaleString()}</p>
+                                        <p className="font-semibold text-gray-900 dark:text-white">{channel.averageViews.toLocaleString()}</p>
                                     </div>
                                 </div>
                             </div>
@@ -232,7 +232,7 @@ export default function ChannelOwnerDashboard() {
 
             {/* Active Deals */}
             <div className="p-4">
-                <h2 className="text-lg font-semibold mb-4">Active Deals</h2>
+                <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Active Deals</h2>
                 <div className="space-y-3">
                     {deals.map((deal) => (
                         <div
@@ -242,7 +242,7 @@ export default function ChannelOwnerDashboard() {
                         >
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <h3 className="font-semibold">{deal.channel.title}</h3>
+                                    <h3 className="font-semibold text-gray-900 dark:text-white">{deal.channel.title}</h3>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">
                                         with @{deal.advertiser.username || deal.advertiser.firstName}
                                     </p>
@@ -254,7 +254,7 @@ export default function ChannelOwnerDashboard() {
                                     {deal.status.replace('_', ' ')}
                                 </span>
                             </div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                            <p className="text-sm font-semibold mt-2 text-gray-900 dark:text-white">
                                 {(deal.agreedPrice / 1000000000).toFixed(2)} TON
                             </p>
                         </div>

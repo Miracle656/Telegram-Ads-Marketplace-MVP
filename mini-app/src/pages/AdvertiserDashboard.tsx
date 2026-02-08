@@ -147,12 +147,12 @@ export default function AdvertiserDashboard() {
             <div className="grid grid-cols-2 gap-3 p-4">
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
                     <TrendingUp className="w-5 h-5 text-blue-600 mb-2" />
-                    <p className="text-2xl font-bold">{campaigns.length}</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{campaigns.length}</p>
                     <p className="text-xs text-gray-600 dark:text-gray-400">Campaigns</p>
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
                     <Search className="w-5 h-5 text-green-600 mb-2" />
-                    <p className="text-2xl font-bold">{channels.length}</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{channels.length}</p>
                     <p className="text-xs text-gray-600 dark:text-gray-400">Channels Available</p>
                 </div>
             </div>
@@ -161,14 +161,14 @@ export default function AdvertiserDashboard() {
             <div className="flex gap-2 p-4">
                 <button
                     onClick={() => setView('channels')}
-                    className={`flex-1 py-2 rounded-lg ${view === 'channels' ? 'tg-button' : 'bg-gray-200 dark:bg-gray-700'
+                    className={`flex-1 py-2 rounded-lg ${view === 'channels' ? 'tg-button' : 'bg-gray-200 dark:bg-gray-700 dark:text-gray-200'
                         }`}
                 >
                     Browse Channels
                 </button>
                 <button
                     onClick={() => setView('campaigns')}
-                    className={`flex-1 py-2 rounded-lg ${view === 'campaigns' ? 'tg-button' : 'bg-gray-200 dark:bg-gray-700'
+                    className={`flex-1 py-2 rounded-lg ${view === 'campaigns' ? 'tg-button' : 'bg-gray-200 dark:bg-gray-700 dark:text-gray-200'
                         }`}
                 >
                     My Campaigns
@@ -183,7 +183,7 @@ export default function AdvertiserDashboard() {
                             <input
                                 type="text"
                                 placeholder="Search channels..."
-                                className="w-full pl-10 pr-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-600"
+                                className="w-full pl-10 pr-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-600 dark:text-white"
                             />
                         </div>
                         <button className="p-2 border rounded-lg dark:border-gray-600">
@@ -194,7 +194,7 @@ export default function AdvertiserDashboard() {
                     <div className="space-y-3">
                         {channels.map((channel) => (
                             <div key={channel.id} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-                                <h3 className="font-semibold mb-1">{channel.title}</h3>
+                                <h3 className="font-semibold mb-1 text-gray-900 dark:text-white">{channel.title}</h3>
                                 {channel.username && (
                                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">@{channel.username}</p>
                                 )}
@@ -202,11 +202,11 @@ export default function AdvertiserDashboard() {
                                 <div className="grid grid-cols-2 gap-4 mb-3">
                                     <div>
                                         <p className="text-sm text-gray-600 dark:text-gray-400">Subscribers</p>
-                                        <p className="font-semibold">{channel.subscriberCount.toLocaleString()}</p>
+                                        <p className="font-semibold text-gray-900 dark:text-white">{channel.subscriberCount.toLocaleString()}</p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-600 dark:text-gray-400">Avg. Views</p>
-                                        <p className="font-semibold">{channel.averageViews.toLocaleString()}</p>
+                                        <p className="font-semibold text-gray-900 dark:text-white">{channel.averageViews.toLocaleString()}</p>
                                     </div>
                                 </div>
 
@@ -238,7 +238,7 @@ export default function AdvertiserDashboard() {
             {view === 'campaigns' && (
                 <div className="p-4">
                     <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-semibold">My Campaigns</h2>
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">My Campaigns</h2>
                         <button
                             onClick={() => setShowCreateCampaign(!showCreateCampaign)}
                             className="flex items-center gap-2 tg-button px-4 py-2 rounded-lg text-sm"
@@ -250,21 +250,21 @@ export default function AdvertiserDashboard() {
 
                     {showCreateCampaign && (
                         <form onSubmit={handleCreateCampaign} className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 shadow-sm">
-                            <h3 className="font-semibold mb-3">Create Campaign</h3>
+                            <h3 className="font-semibold mb-3 text-gray-900 dark:text-white">Create Campaign</h3>
                             <div className="space-y-3">
                                 <input
                                     type="text"
                                     placeholder="Campaign Title"
                                     value={newCampaign.title}
                                     onChange={(e) => setNewCampaign({ ...newCampaign, title: e.target.value })}
-                                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                     required
                                 />
                                 <textarea
                                     placeholder="Campaign Brief"
                                     value={newCampaign.brief}
                                     onChange={(e) => setNewCampaign({ ...newCampaign, brief: e.target.value })}
-                                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                     rows={4}
                                     required
                                 />
@@ -273,7 +273,7 @@ export default function AdvertiserDashboard() {
                                     placeholder="Budget (TON)"
                                     value={newCampaign.budget}
                                     onChange={(e) => setNewCampaign({ ...newCampaign, budget: parseFloat(e.target.value) })}
-                                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                     min="0.1"
                                     step="0.1"
                                     required
@@ -283,7 +283,7 @@ export default function AdvertiserDashboard() {
                                     placeholder="Min Subscribers"
                                     value={newCampaign.minSubscribers}
                                     onChange={(e) => setNewCampaign({ ...newCampaign, minSubscribers: parseInt(e.target.value) })}
-                                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                 />
                                 <div className="flex gap-2">
                                     <button type="submit" className="flex-1 tg-button py-2 rounded-lg">
@@ -304,10 +304,10 @@ export default function AdvertiserDashboard() {
                     <div className="space-y-3">
                         {campaigns.map((campaign) => (
                             <div key={campaign.id} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-                                <h3 className="font-semibold mb-2">{campaign.title}</h3>
+                                <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">{campaign.title}</h3>
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{campaign.brief}</p>
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="font-semibold">{(campaign.budget / 1000000000).toFixed(2)} TON</span>
+                                    <span className="font-semibold text-gray-900 dark:text-white">{(campaign.budget / 1000000000).toFixed(2)} TON</span>
                                     <span className="text-gray-600 dark:text-gray-400">
                                         {campaign.minSubscribers ? `${campaign.minSubscribers.toLocaleString()}+ subs` : 'No min'}
                                     </span>
@@ -322,25 +322,25 @@ export default function AdvertiserDashboard() {
             {showCreateDeal && selectedChannel && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-sm">
-                        <h3 className="text-lg font-bold mb-4">Create Deal</h3>
+                        <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Create Deal</h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                             {selectedChannel.title}
                         </p>
 
                         <div className="mb-4">
-                            <label className="block text-sm font-medium mb-2">Price (TON)</label>
+                            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Price (TON)</label>
                             <input
                                 type="number"
                                 min="0.1"
                                 step="0.1"
                                 value={dealPrice}
                                 onChange={(e) => setDealPrice(parseFloat(e.target.value) || 1)}
-                                className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                                className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             />
                         </div>
 
                         <div className="mb-4">
-                            <label className="block text-sm font-medium mb-2">Ad Format</label>
+                            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Ad Format</label>
                             <div className="text-sm text-gray-600 dark:text-gray-400">
                                 {selectedChannel.adFormats[0]?.format || 'POST'}
                             </div>
