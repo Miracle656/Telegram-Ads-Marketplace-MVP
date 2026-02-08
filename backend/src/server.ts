@@ -10,6 +10,11 @@ import paymentRoutes from './routes/payments.routes';
 import { initBot } from './bot';
 import { startCronJobs } from './jobs';
 
+// Add BigInt serialization support for JSON.stringify
+(BigInt.prototype as any).toJSON = function () {
+    return this.toString();
+};
+
 dotenv.config();
 
 const app: Express = express();
