@@ -112,7 +112,7 @@ export default function DealFlow() {
     return (
         <div className="pb-6">
             {/* Header */}
-            <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-4">
+            <div className="bg-[#0088cc] text-white p-4">
                 <button onClick={() => navigate(-1)} className="mb-3">
                     <ArrowLeft className="w-6 h-6" />
                 </button>

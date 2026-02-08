@@ -30,6 +30,9 @@ export default function AdvertiserDashboard() {
     const [channels, setChannels] = useState<Channel[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCreateCampaign, setShowCreateCampaign] = useState(false);
+    const [showCreateDeal, setShowCreateDeal] = useState(false);
+    const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
+    const [dealPrice, setDealPrice] = useState<number>(1);
 
     const [newCampaign, setNewCampaign] = useState({
         title: '',
@@ -76,31 +79,37 @@ export default function AdvertiserDashboard() {
         }
     };
 
-    const handleCreateDeal = async (channel: Channel, campaignId?: string) => {
-        if (!campaignId && campaigns.length === 0) {
+    const openCreateDealModal = (channel: Channel) => {
+        if (campaigns.length === 0) {
             alert('Please create a campaign first before creating a deal');
             setView('campaigns');
             setShowCreateCampaign(true);
             return;
         }
 
-        // If no campaign selected and have campaigns, use the first one
-        const targetCampaignId = campaignId || (campaigns.length > 0 ? campaigns[0].id : null);
+        // Set default price from channel's first ad format (in TON)
+        const defaultPriceNano = channel.adFormats[0]?.price || 1000000000;
+        setDealPrice(defaultPriceNano / 1000000000);
+        setSelectedChannel(channel);
+        setShowCreateDeal(true);
+    };
 
-        if (!targetCampaignId) {
-            alert('No campaign available');
-            return;
-        }
+    const confirmCreateDeal = async () => {
+        if (!selectedChannel) return;
+
+        const targetCampaignId = campaigns[0].id;
 
         try {
             const response = await api.deals.create({
-                channelId: String(channel.id),
+                channelId: String(selectedChannel.id),
                 advertiserId: String(user?.id || ''),
                 campaignId: String(targetCampaignId),
-                adFormatType: channel.adFormats[0]?.format || 'POST',
-                agreedPrice: channel.adFormats[0]?.price || 1000000000 // Default 1 TON
+                adFormatType: selectedChannel.adFormats[0]?.format || 'POST',
+                agreedPrice: dealPrice * 1000000000 // Convert TON to nanoTON
             });
 
+            setShowCreateDeal(false);
+            setSelectedChannel(null);
             navigate(`/deals/${response.data.id}`);
         } catch (error: any) {
             console.error('Error creating deal:', error);
@@ -210,7 +219,7 @@ export default function AdvertiserDashboard() {
                                 )}
 
                                 <button
-                                    onClick={() => handleCreateDeal(channel)}
+                                    onClick={() => openCreateDealModal(channel)}
                                     className="w-full tg-button py-2 rounded-lg text-sm"
                                 >
                                     Create Deal
@@ -300,6 +309,55 @@ export default function AdvertiserDashboard() {
                                 </div>
                             </div>
                         ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Create Deal Modal */}
+            {showCreateDeal && selectedChannel && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-sm">
+                        <h3 className="text-lg font-bold mb-4">Create Deal</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                            {selectedChannel.title}
+                        </p>
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-2">Price (TON)</label>
+                            <input
+                                type="number"
+                                min="0.1"
+                                step="0.1"
+                                value={dealPrice}
+                                onChange={(e) => setDealPrice(parseFloat(e.target.value) || 1)}
+                                className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
+                            />
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-2">Ad Format</label>
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                                {selectedChannel.adFormats[0]?.format || 'POST'}
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowCreateDeal(false);
+                                    setSelectedChannel(null);
+                                }}
+                                className="flex-1 py-2 rounded-lg border dark:border-gray-600"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmCreateDeal}
+                                className="flex-1 tg-button py-2 rounded-lg"
+                            >
+                                Create Deal
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
