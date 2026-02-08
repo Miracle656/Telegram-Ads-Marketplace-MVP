@@ -184,7 +184,7 @@ model CampaignApplication {
 
 model ChannelListing {
   id          Int      @id @default(autoincrement())
-  channelId   Int
+  channelId   Int      @unique
   minBudget   Float?
   targetNiches String[]
   isPublic    Boolean  @default(true)
