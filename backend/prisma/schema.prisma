@@ -178,6 +178,7 @@ model CampaignApplication {
 
   @@index([campaignId])
   @@index([channelId])
+  @@unique([campaignId, channelId])
 }
 
 model ChannelListing {
