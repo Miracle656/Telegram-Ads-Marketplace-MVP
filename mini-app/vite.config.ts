@@ -8,9 +8,14 @@ const certPath = path.resolve(__dirname, 'certs/localhost.pem');
 const keyPath = path.resolve(__dirname, 'certs/localhost-key.pem');
 const hasHttps = fs.existsSync(certPath) && fs.existsSync(keyPath);
 
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
+
 // https://vitejs.dev/config/
 export default defineConfig({
-    plugins: [react()],
+    plugins: [
+        react(),
+        nodePolyfills()
+    ],
     server: {
         host: true,
         port: 5173,
