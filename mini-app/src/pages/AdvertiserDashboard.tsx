@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { Plus, Search, Filter, TrendingUp } from 'lucide-react';
+import { Spinner } from '@telegram-apps/telegram-ui';
 import useTelegramWebApp from '../hooks/useTelegramWebApp';
 
 interface Campaign {
@@ -118,7 +119,11 @@ export default function AdvertiserDashboard() {
     };
 
     if (loading) {
-        return <div className="p-4">Loading...</div>;
+        return (
+            <div className="flex justify-center items-center h-[50vh]">
+                <Spinner size="l" />
+            </div>
+        );
     }
 
     return (

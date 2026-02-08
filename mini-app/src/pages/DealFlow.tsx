@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { useEscrow } from '../hooks/useEscrow';
 import { ArrowLeft, CheckCircle, Send, Edit, ArrowRight } from 'lucide-react';
+import { Spinner } from '@telegram-apps/telegram-ui';
 
 interface Deal {
     id: string;
@@ -125,7 +126,11 @@ export default function DealFlow() {
     };
 
     if (loading) {
-        return <div className="p-4">Loading...</div>;
+        return (
+            <div className="flex justify-center items-center h-[50vh]">
+                <Spinner size="l" />
+            </div>
+        );
     }
 
     if (!deal) {

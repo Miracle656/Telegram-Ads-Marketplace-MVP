@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { Plus, Users, TrendingUp, DollarSign, Settings } from 'lucide-react';
+import { Spinner } from '@telegram-apps/telegram-ui';
 import useTelegramWebApp from '../hooks/useTelegramWebApp';
 
 interface Channel {
@@ -78,7 +79,11 @@ export default function ChannelOwnerDashboard() {
     };
 
     if (loading) {
-        return <div className="p-4">Loading...</div>;
+        return (
+            <div className="flex justify-center items-center h-[50vh]">
+                <Spinner size="l" />
+            </div>
+        );
     }
 
     return (
