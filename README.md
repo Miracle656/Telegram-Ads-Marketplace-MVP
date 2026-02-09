@@ -36,6 +36,19 @@ A Telegram Mini App that connects channel owners with advertisers through an esc
 - Configurable verification period
 - Automatic fund release upon successful verification
 
+## 📊 MVP Implementation Status
+
+| Requirement | Status | Notes |
+|-------------|--------|-------|
+| **1. Marketplace Model** | ✅ Done | Channel & Campaign creation, Unified Deal Flow, Filtering (basic) |
+| **2. Verified Stats** | ⚠️ Partial | Subscriber count is real. Views are estimated (10% of subs). |
+| **3. Ad Formats** | ✅ Done | Post, Forward, Story, Custom formats supported. Pricing per channel. |
+| **4. TON Escrow** | ✅ Done | Smart Contract (Tolk), Unique Deal Flow, Auto-cancel (Timeout Job), Refunds. |
+| **5. Creative Approval** | ✅ Done | Negotiation -> Draft -> Revision -> Approval loop implemented. |
+| **6. Auto-Posting** | ✅ Done | Bot posts to channel. Verification mocked (assumes success). |
+| **7. PR Manager Flow** | ❌ Skipped | Not in MVP scope. Admin syncing is implemented but single-user management. |
+
+
 ## 🏗️ Architecture
 
 ### Backend (Node.js/TypeScript)

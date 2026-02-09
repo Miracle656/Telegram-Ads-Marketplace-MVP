@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { useEscrow } from '../hooks/useEscrow';
+import { useTelegramWebApp } from '../hooks/useTelegramWebApp';
 import { ArrowLeft, CheckCircle, Send, Edit, ArrowRight } from 'lucide-react';
 import { Spinner } from '@telegram-apps/telegram-ui';
 
@@ -15,8 +16,8 @@ interface Deal {
     agreedPrice: number;
     adFormatType: string;
     scheduledPostTime?: string;
-    owner: { username?: string; firstName?: string };
-    advertiser: { username?: string; firstName?: string };
+    owner: { username?: string; firstName?: string; telegramId: string | number };
+    advertiser: { username?: string; firstName?: string; telegramId: string | number };
     payment?: {
         isPaid: boolean;
         paymentAddress?: string;
@@ -37,11 +38,16 @@ interface Deal {
 export default function DealFlow() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { user } = useTelegramWebApp();
     const [deal, setDeal] = useState<Deal | null>(null);
     const [loading, setLoading] = useState(true);
     const [creativeContent, setCreativeContent] = useState('');
     const [feedback, setFeedback] = useState('');
     const { deposit, loading: escrowLoading, error: escrowError } = useEscrow();
+
+    // Determine roles
+    const isAdvertiser = deal && user ? String(deal.advertiser.telegramId) === String(user.id) : false;
+    const isChannelOwner = deal && user ? String(deal.owner.telegramId) === String(user.id) : false;
 
     const handlePayment = async () => {
         if (!deal) return;
@@ -174,8 +180,9 @@ export default function DealFlow() {
                         {deal.payment?.isPaid && (
                             <div className="flex items-start gap-3">
                                 <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
-                                <div>
+                                <div className="flex-1">
                                     <p className="font-semibold text-gray-900 dark:text-white">Payment Received</p>
+                                    <p className="text-gray-600 dark:text-gray-400">Escrow Secured</p>
                                 </div>
                             </div>
                         )}
@@ -205,7 +212,7 @@ export default function DealFlow() {
                 </div>
             </div>
 
-            {/* Payment Section */}
+            {/* Payment Section - Only for Advertiser */}
             {deal.status === 'AWAITING_PAYMENT' && !deal.payment?.isPaid && (
                 <div className="p-4">
                     <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-100 dark:border-blue-800">
@@ -217,20 +224,26 @@ export default function DealFlow() {
                             Deposit <b>{(deal.agreedPrice / 1000000000).toFixed(2)} TON</b> to escrow to start the deal.
                         </p>
 
-                        <button
-                            onClick={handlePayment}
-                            disabled={escrowLoading}
-                            className="w-full bg-[#0088cc] text-white py-3 rounded-xl font-medium shadow-lg shadow-blue-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-                        >
-                            {escrowLoading ? (
-                                <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
-                            ) : (
-                                <>
-                                    <span>Pay with TON</span>
-                                    <ArrowRight className="w-4 h-4" />
-                                </>
-                            )}
-                        </button>
+                        {isAdvertiser ? (
+                            <button
+                                onClick={handlePayment}
+                                disabled={escrowLoading}
+                                className="w-full bg-[#0088cc] text-white py-3 rounded-xl font-medium shadow-lg shadow-blue-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                            >
+                                {escrowLoading ? (
+                                    <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
+                                ) : (
+                                    <>
+                                        <span>Pay with TON</span>
+                                        <ArrowRight className="w-4 h-4" />
+                                    </>
+                                )}
+                            </button>
+                        ) : (
+                            <div className="text-sm text-center text-gray-500 bg-gray-100 dark:bg-gray-700/50 p-2 rounded-lg">
+                                Waiting for Advertiser to pay
+                            </div>
+                        )}
 
                         {escrowError && (
                             <p className="text-xs text-red-500 mt-2 text-center">{escrowError}</p>
@@ -243,30 +256,36 @@ export default function DealFlow() {
                 </div>
             )}
 
-            {/* Creative Section */}
+            {/* Creative Section - Only for Channel Owner */}
             {deal.status === 'CREATIVE_PENDING' && (
                 <div className="p-4">
                     <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
                         <h3 className="font-semibold mb-3">Submit Post Content</h3>
-                        <textarea
-                            value={creativeContent}
-                            onChange={(e) => setCreativeContent(e.target.value)}
-                            placeholder="Write your post content here..."
-                            className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 mb-3"
-                            rows={6}
-                        />
-                        <button
-                            onClick={handleSubmitCreative}
-                            className="w-full tg-button py-2 rounded-lg flex items-center justify-center gap-2"
-                        >
-                            <Send className="w-4 h-4" />
-                            Submit for Review
-                        </button>
+                        {isChannelOwner ? (
+                            <>
+                                <textarea
+                                    value={creativeContent}
+                                    onChange={(e) => setCreativeContent(e.target.value)}
+                                    placeholder="Write your post content here..."
+                                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 mb-3"
+                                    rows={6}
+                                />
+                                <button
+                                    onClick={handleSubmitCreative}
+                                    className="w-full tg-button py-2 rounded-lg flex items-center justify-center gap-2"
+                                >
+                                    <Send className="w-4 h-4" />
+                                    Submit for Review
+                                </button>
+                            </>
+                        ) : (
+                            <p className="text-sm text-gray-500 text-center">Waiting for Channel Owner to submit content.</p>
+                        )}
                     </div>
                 </div>
             )}
 
-            {/* Creative Review */}
+            {/* Creative Review - Only for Advertiser */}
             {latestCreative && deal.status === 'CREATIVE_REVIEW' && (
                 <div className="p-4">
                     <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
@@ -275,37 +294,41 @@ export default function DealFlow() {
                             <p className="whitespace-pre-wrap">{latestCreative.content}</p>
                         </div>
 
-                        <div className="space-y-3">
-                            <button
-                                onClick={handleApproveCreative}
-                                className="w-full bg-green-600 text-white py-2 rounded-lg flex items-center justify-center gap-2"
-                            >
-                                <CheckCircle className="w-4 h-4" />
-                                Approve & Schedule
-                            </button>
-
-                            <div>
-                                <textarea
-                                    value={feedback}
-                                    onChange={(e) => setFeedback(e.target.value)}
-                                    placeholder="Request changes (optional)"
-                                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 mb-2"
-                                    rows={3}
-                                />
+                        {isAdvertiser ? (
+                            <div className="space-y-3">
                                 <button
-                                    onClick={handleRequestRevision}
-                                    className="w-full bg-orange-600 text-white py-2 rounded-lg flex items-center justify-center gap-2"
+                                    onClick={handleApproveCreative}
+                                    className="w-full bg-green-600 text-white py-2 rounded-lg flex items-center justify-center gap-2"
                                 >
-                                    <Edit className="w-4 h-4" />
-                                    Request Revision
+                                    <CheckCircle className="w-4 h-4" />
+                                    Approve & Schedule
                                 </button>
+
+                                <div>
+                                    <textarea
+                                        value={feedback}
+                                        onChange={(e) => setFeedback(e.target.value)}
+                                        placeholder="Request changes (optional)"
+                                        className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 mb-2"
+                                        rows={3}
+                                    />
+                                    <button
+                                        onClick={handleRequestRevision}
+                                        className="w-full bg-orange-600 text-white py-2 rounded-lg flex items-center justify-center gap-2"
+                                    >
+                                        <Edit className="w-4 h-4" />
+                                        Request Revision
+                                    </button>
+                                </div>
                             </div>
-                        </div>
+                        ) : (
+                            <p className="text-sm text-gray-500 text-center">Waiting for Advertiser to review.</p>
+                        )}
                     </div>
                 </div>
             )}
 
-            {/* Negotiation */}
+            {/* Negotiation - Only for Channel Owner to Accept */}
             {deal.status === 'NEGOTIATING' && (
                 <div className="p-4">
                     <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
@@ -313,12 +336,18 @@ export default function DealFlow() {
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                             Confirm the deal terms to proceed to payment
                         </p>
-                        <button
-                            onClick={handleAcceptDeal}
-                            className="w-full tg-button py-2 rounded-lg"
-                        >
-                            Accept Deal
-                        </button>
+                        {isChannelOwner ? (
+                            <button
+                                onClick={handleAcceptDeal}
+                                className="w-full tg-button py-2 rounded-lg"
+                            >
+                                Accept Deal
+                            </button>
+                        ) : (
+                            <div className="text-sm text-center text-gray-500 bg-gray-100 dark:bg-gray-700/50 p-2 rounded-lg">
+                                Waiting for Channel Owner to accept
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
