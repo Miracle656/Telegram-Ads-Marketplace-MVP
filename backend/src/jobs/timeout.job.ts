@@ -21,8 +21,12 @@ export const timeoutJob = cron.schedule('0 * * * *', async () => {
             // If payment exists and is paid, refund it
             if (deal.payment && (deal.payment as any).status === 'PAID') {
                 try {
-                    // TODO: Get advertiser wallet address from their profile
-                    const advertiserWallet = 'ADVERTISER_WALLET_ADDRESS';
+                    const advertiserWallet = deal.advertiser.walletAddress;
+
+                    if (!advertiserWallet) {
+                        console.error(`Cannot refund deal ${deal.id}: Advertiser wallet not set`);
+                        continue;
+                    }
 
                     await tonService.refundFunds(
                         deal.payment.escrowWallet,
