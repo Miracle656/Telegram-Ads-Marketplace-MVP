@@ -14,7 +14,7 @@ interface Deal {
         username?: string;
     };
     agreedPrice: number;
-    adFormatType: string;
+    adFormat: string;
     scheduledPostTime?: string;
     owner: { username?: string; firstName?: string; telegramId: string | number };
     advertiser: { username?: string; firstName?: string; telegramId: string | number };
@@ -172,7 +172,7 @@ export default function DealFlow() {
                             <div>
                                 <p className="font-semibold text-gray-900 dark:text-white">Deal Created</p>
                                 <p className="text-gray-600 dark:text-gray-400">
-                                    {(deal.agreedPrice / 1000000000).toFixed(2)} TON for {deal.adFormatType}
+                                    {(deal.agreedPrice / 1000000000).toFixed(2)} TON for {deal.adFormat}
                                 </p>
                             </div>
                         </div>
