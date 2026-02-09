@@ -36,6 +36,8 @@ export default function AdvertiserDashboard() {
     const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
     const [campaignDeals, setCampaignDeals] = useState<any[]>([]);
     const [loadingDeals, setLoadingDeals] = useState(false);
+    const [createDealLoading, setCreateDealLoading] = useState(false);
+    const [createCampaignLoading, setCreateCampaignLoading] = useState(false);
     const [dealPrice, setDealPrice] = useState<number>(1);
 
     const [newCampaign, setNewCampaign] = useState({
@@ -85,6 +87,7 @@ export default function AdvertiserDashboard() {
 
     const handleCreateCampaign = async (e: React.FormEvent) => {
         e.preventDefault();
+        setCreateCampaignLoading(true);
 
         try {
             await api.campaigns.create({
@@ -97,6 +100,8 @@ export default function AdvertiserDashboard() {
         } catch (error: any) {
             console.error('Error creating campaign:', error);
             alert(error.response?.data?.error || 'Failed to create campaign');
+        } finally {
+            setCreateCampaignLoading(false);
         }
     };
 
@@ -117,6 +122,7 @@ export default function AdvertiserDashboard() {
 
     const confirmCreateDeal = async () => {
         if (!selectedChannel) return;
+        setCreateDealLoading(true);
 
         const targetCampaignId = campaigns[0].id;
 
@@ -135,6 +141,8 @@ export default function AdvertiserDashboard() {
         } catch (error: any) {
             console.error('Error creating deal:', error);
             alert(error.response?.data?.error || 'Failed to create deal');
+        } finally {
+            setCreateDealLoading(false);
         }
     };
 
@@ -306,8 +314,12 @@ export default function AdvertiserDashboard() {
                                     className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                 />
                                 <div className="flex gap-2">
-                                    <button type="submit" className="flex-1 tg-button py-2 rounded-lg">
-                                        Create Campaign
+                                    <button
+                                        type="submit"
+                                        className="flex-1 tg-button py-2 rounded-lg flex items-center justify-center"
+                                        disabled={createCampaignLoading}
+                                    >
+                                        {createCampaignLoading ? <Spinner size="s" /> : 'Create Campaign'}
                                     </button>
                                     <button
                                         type="button"
@@ -382,9 +394,10 @@ export default function AdvertiserDashboard() {
                             </button>
                             <button
                                 onClick={confirmCreateDeal}
-                                className="flex-1 tg-button py-2 rounded-lg"
+                                className="flex-1 tg-button py-2 rounded-lg flex items-center justify-center"
+                                disabled={createDealLoading}
                             >
-                                Create Deal
+                                {createDealLoading ? <Spinner size="s" /> : 'Create Deal'}
                             </button>
                         </div>
                     </div>

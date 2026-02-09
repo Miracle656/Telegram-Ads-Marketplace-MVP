@@ -43,6 +43,7 @@ export default function DealFlow() {
     const [loading, setLoading] = useState(true);
     const [creativeContent, setCreativeContent] = useState('');
     const [feedback, setFeedback] = useState('');
+    const [actionLoading, setActionLoading] = useState(false);
     const { deposit, loading: escrowLoading, error: escrowError } = useEscrow();
 
     // Determine roles
@@ -90,16 +91,20 @@ export default function DealFlow() {
     };
 
     const handleAcceptDeal = async () => {
+        setActionLoading(true);
         try {
             await api.deals.accept(id!);
             loadDeal();
         } catch (error: any) {
             alert(error.response?.data?.error || 'Failed to accept deal');
+        } finally {
+            setActionLoading(false);
         }
     };
 
     const handleSubmitCreative = async () => {
         if (!creativeContent.trim()) return;
+        setActionLoading(true);
 
         try {
             await api.deals.submitCreative(id!, { content: creativeContent, mediaUrls: [] });
@@ -107,20 +112,26 @@ export default function DealFlow() {
             loadDeal();
         } catch (error: any) {
             alert(error.response?.data?.error || 'Failed to submit creative');
+        } finally {
+            setActionLoading(false);
         }
     };
 
     const handleApproveCreative = async () => {
+        setActionLoading(true);
         try {
             await api.deals.approve(id!, {});
             loadDeal();
         } catch (error: any) {
             alert(error.response?.data?.error || 'Failed to approve creative');
+        } finally {
+            setActionLoading(false);
         }
     };
 
     const handleRequestRevision = async () => {
         if (!feedback.trim()) return;
+        setActionLoading(true);
 
         try {
             await api.deals.revise(id!, { feedback });
@@ -128,6 +139,8 @@ export default function DealFlow() {
             loadDeal();
         } catch (error: any) {
             alert(error.response?.data?.error || 'Failed to request revision');
+        } finally {
+            setActionLoading(false);
         }
     };
 
@@ -273,9 +286,14 @@ export default function DealFlow() {
                                 <button
                                     onClick={handleSubmitCreative}
                                     className="w-full tg-button py-2 rounded-lg flex items-center justify-center gap-2"
+                                    disabled={actionLoading}
                                 >
-                                    <Send className="w-4 h-4" />
-                                    Submit for Review
+                                    {actionLoading ? <Spinner size="s" /> : (
+                                        <>
+                                            <Send className="w-4 h-4" />
+                                            Submit for Review
+                                        </>
+                                    )}
                                 </button>
                             </>
                         ) : (
@@ -299,9 +317,14 @@ export default function DealFlow() {
                                 <button
                                     onClick={handleApproveCreative}
                                     className="w-full bg-green-600 text-white py-2 rounded-lg flex items-center justify-center gap-2"
+                                    disabled={actionLoading}
                                 >
-                                    <CheckCircle className="w-4 h-4" />
-                                    Approve & Schedule
+                                    {actionLoading ? <Spinner size="s" /> : (
+                                        <>
+                                            <CheckCircle className="w-4 h-4" />
+                                            Approve & Schedule
+                                        </>
+                                    )}
                                 </button>
 
                                 <div>
@@ -315,9 +338,14 @@ export default function DealFlow() {
                                     <button
                                         onClick={handleRequestRevision}
                                         className="w-full bg-orange-600 text-white py-2 rounded-lg flex items-center justify-center gap-2"
+                                        disabled={actionLoading}
                                     >
-                                        <Edit className="w-4 h-4" />
-                                        Request Revision
+                                        {actionLoading ? <Spinner size="s" /> : (
+                                            <>
+                                                <Edit className="w-4 h-4" />
+                                                Request Revision
+                                            </>
+                                        )}
                                     </button>
                                 </div>
                             </div>
@@ -339,9 +367,10 @@ export default function DealFlow() {
                         {isChannelOwner ? (
                             <button
                                 onClick={handleAcceptDeal}
-                                className="w-full tg-button py-2 rounded-lg"
+                                className="w-full tg-button py-2 rounded-lg flex items-center justify-center"
+                                disabled={actionLoading}
                             >
-                                Accept Deal
+                                {actionLoading ? <Spinner size="s" /> : 'Accept Deal'}
                             </button>
                         ) : (
                             <div className="text-sm text-center text-gray-500 bg-gray-100 dark:bg-gray-700/50 p-2 rounded-lg">

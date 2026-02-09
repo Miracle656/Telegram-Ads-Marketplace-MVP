@@ -4,6 +4,7 @@ import { api } from '../services/api';
 import { Plus, Users, TrendingUp, DollarSign, Settings } from 'lucide-react';
 import { Spinner } from '@telegram-apps/telegram-ui';
 import useTelegramWebApp from '../hooks/useTelegramWebApp';
+import EditChannelModal from '../components/EditChannelModal';
 
 interface Channel {
     id: string;
@@ -12,6 +13,7 @@ interface Channel {
     subscriberCount: number;
     averageViews: number;
     isActive: boolean;
+    adFormats?: any[];
 }
 
 interface Deal {
@@ -34,6 +36,8 @@ export default function ChannelOwnerDashboard() {
     const [deals, setDeals] = useState<Deal[]>([]);
     const [loading, setLoading] = useState(true);
     const [showAddChannel, setShowAddChannel] = useState(false);
+    const [addChannelLoading, setAddChannelLoading] = useState(false);
+    const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
 
     // Form state
     const [newChannel, setNewChannel] = useState({
@@ -66,15 +70,29 @@ export default function ChannelOwnerDashboard() {
 
     const handleAddChannel = async (e: React.FormEvent) => {
         e.preventDefault();
+        setAddChannelLoading(true);
 
         try {
             await api.channels.create(newChannel);
             setShowAddChannel(false);
             setNewChannel({ telegramChannelId: '', title: '', username: '', description: '' });
-            loadData();
+            await loadData();
         } catch (error: any) {
             console.error('Error adding channel:', error);
             alert(error.response?.data?.error || 'Failed to add channel');
+        } finally {
+            setAddChannelLoading(false);
+        }
+    };
+
+    const handleSavePricing = async (channelId: string, formats: any[]) => {
+        try {
+            await api.channels.updatePricing(channelId, { formats });
+            await loadData(); // Reload to get updated formats
+            alert('Pricing updated successfully!');
+        } catch (error: any) {
+            console.error('Error updating pricing:', error);
+            alert(error.response?.data?.error || 'Failed to update pricing');
         }
     };
 
@@ -118,7 +136,7 @@ export default function ChannelOwnerDashboard() {
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
                     <DollarSign className="w-5 h-5 text-yellow-600 mb-2" />
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {deals.reduce((sum, d) => sum + d.agreedPrice, 0) / 1000000000}
+                        {deals.reduce((sum, d) => d.status === 'COMPLETED' ? sum + d.agreedPrice : sum, 0) / 1000000000}
                     </p>
                     <p className="text-xs text-gray-600 dark:text-gray-400">TON Earned</p>
                 </div>
@@ -177,8 +195,12 @@ export default function ChannelOwnerDashboard() {
                             </div>
 
                             <div className="flex gap-2 mt-4">
-                                <button type="submit" className="flex-1 tg-button py-2 rounded-lg">
-                                    Link Channel
+                                <button
+                                    type="submit"
+                                    className="flex-1 tg-button py-2 rounded-lg flex items-center justify-center"
+                                    disabled={addChannelLoading}
+                                >
+                                    {addChannelLoading ? <Spinner size="s" /> : 'Link Channel'}
                                 </button>
                                 <button
                                     type="button"
@@ -210,7 +232,10 @@ export default function ChannelOwnerDashboard() {
                                             <p className="text-sm text-gray-600 dark:text-gray-400">@{channel.username}</p>
                                         )}
                                     </div>
-                                    <button className="text-gray-400 hover:text-gray-600">
+                                    <button
+                                        onClick={() => setEditingChannel(channel)}
+                                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                                    >
                                         <Settings className="w-5 h-5" />
                                     </button>
                                 </div>
@@ -261,6 +286,13 @@ export default function ChannelOwnerDashboard() {
                     ))}
                 </div>
             </div>
+
+            <EditChannelModal
+                isOpen={!!editingChannel}
+                onClose={() => setEditingChannel(null)}
+                onSave={handleSavePricing}
+                channel={editingChannel}
+            />
         </div>
     );
 }
