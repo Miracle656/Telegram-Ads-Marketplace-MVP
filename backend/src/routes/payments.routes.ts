@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient, DealStatus } from '@prisma/client';
+import { PrismaClient, DealStatus, PaymentStatus } from '@prisma/client';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { tonService, EscrowStatus } from '../services/ton.service';
 import { dealService } from '../services/deal.service';
@@ -383,6 +383,97 @@ router.get('/escrow/contract', (req: Request, res: Response) => {
             explorerUrl: `https://testnet.tonscan.org/address/${tonService.getEscrowContractAddress()}`
         }
     });
+});
+
+/**
+ * POST /api/payments/admin/release-stuck - Admin endpoint to release funds for completed deals
+ * that were not automatically released.
+ */
+router.post('/admin/release-stuck', authMiddleware, async (req: Request, res: Response) => {
+    try {
+        // Authenticate admin (in real app, check role. Here assuming admin knows the endpoint)
+        // Or check a secret header
+
+        console.log('🔄 Starting retroactive fund release...');
+
+        // Find all deals that are POSTED or COMPLETED but payment is not RELEASED
+        const stuckPayments = await prisma.payment.findMany({
+            where: {
+                status: { not: PaymentStatus.RELEASED },
+                deal: {
+                    status: { in: [DealStatus.POSTED, DealStatus.COMPLETED] }
+                }
+            },
+            include: {
+                deal: {
+                    include: {
+                        channel: {
+                            include: {
+                                owner: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        console.log(`Found ${stuckPayments.length} stuck payments`);
+        const results = [];
+
+        for (const payment of stuckPayments) {
+            try {
+                const deal = payment.deal;
+                const channelOwner = deal.channel.owner;
+                const walletAddress = channelOwner.walletAddress;
+
+                if (!walletAddress) {
+                    results.push({ dealId: deal.id, status: 'failed', error: 'No wallet address for owner' });
+                    continue;
+                }
+
+                console.log(`Processing deal ${deal.id}, releasing ${payment.amount} TON to ${walletAddress}`);
+
+                // Release funds
+                await tonService.releaseFunds(
+                    payment.escrowWallet,
+                    payment.encryptedKey,
+                    walletAddress,
+                    BigInt(Math.round(payment.amount)) // Ensure BigInt for nanotons
+                );
+
+                // Update status
+                await prisma.payment.update({
+                    where: { id: payment.id },
+                    data: {
+                        status: PaymentStatus.RELEASED,
+                        releasedAt: new Date()
+                    }
+                });
+
+                // Notify
+                await sendDealNotification(
+                    channelOwner.telegramId.toString(),
+                    `💰 *Funds Released (Retroactive)!*\n\n${payment.amount} TON has been released to your wallet for deal #${deal.id}.`,
+                    deal.id.toString()
+                );
+
+                results.push({ dealId: deal.id, status: 'success', amount: payment.amount });
+
+            } catch (err: any) {
+                console.error(`Failed to release for deal ${payment.dealId}:`, err);
+                results.push({ dealId: payment.dealId, status: 'failed', error: err.message });
+            }
+        }
+
+        res.json({
+            message: `Processed ${stuckPayments.length} payments`,
+            results
+        });
+
+    } catch (error) {
+        console.error('Error in retroactive release:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
 export default router;

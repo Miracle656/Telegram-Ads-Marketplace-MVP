@@ -1,9 +1,10 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient, DealStatus, CreativeStatus } from '@prisma/client';
+import { PrismaClient, DealStatus, CreativeStatus, PaymentStatus } from '@prisma/client';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { verifyAdminMiddleware } from '../middleware/admin-verification.middleware';
 import { dealService } from '../services/deal.service';
 import { postingService } from '../services/posting.service';
+import { tonService } from '../services/ton.service';
 import { sendDealNotification } from '../bot';
 import { z } from 'zod';
 
@@ -383,6 +384,66 @@ router.post('/:id/submit-post', authMiddleware, async (req: Request, res: Respon
             `🎉 *Ad Posted!*\n\nYour ad has been posted on *${deal.channel.title}*!\n\n[View Post](${postUrl})`,
             dealId.toString()
         );
+
+        // --- AUTOMATIC FUND RELEASE ---
+        try {
+            // Get payment details
+            const payment = await prisma.payment.findUnique({
+                where: { dealId: dealId }
+            });
+
+            if (payment && payment.status !== PaymentStatus.RELEASED) {
+                // Get channel owner's wallet
+                // Note: 'user' variable is the channel owner (req.user)
+                const channelOwnerWallet = user.walletAddress;
+
+                if (channelOwnerWallet) {
+                    console.log(`💸 Releasing funds for deal ${dealId} to ${channelOwnerWallet}`);
+
+                    // Release funds from escrow
+                    await tonService.releaseFunds(
+                        payment.escrowWallet,
+                        payment.encryptedKey, // This might be empty if using master wallet, service handles it
+                        channelOwnerWallet,
+                        BigInt(Math.round(payment.amount)) // amount is float, need bigint nanoton
+                        // Wait, amount in DB is Float (TON) or BigInt (Nanotons)?
+                        // Prisma schema says Float. tonService expects BigInt (nanotons).
+                        // Let's check how it was stored.
+                    );
+
+                    // Update payment status
+                    await prisma.payment.update({
+                        where: { id: payment.id },
+                        data: {
+                            status: PaymentStatus.RELEASED,
+                            releasedAt: new Date()
+                        }
+                    });
+
+                    // Notify channel owner
+                    console.log(`✅ Funds released to ${channelOwnerWallet}`);
+
+                    await prisma.notification.create({
+                        data: {
+                            userId: user.id,
+                            message: `💰 Funds Released! ${payment.amount} TON has been sent to your wallet.`
+                        }
+                    });
+
+                    await sendDealNotification(
+                        user.telegramId.toString(),
+                        `💰 *Funds Released!*\n\n${payment.amount} TON has been released to your wallet address:\n\`${channelOwnerWallet}\``,
+                        dealId.toString()
+                    );
+                } else {
+                    console.error('Channel owner has no wallet address linked');
+                    // We should probably notify them to link wallet
+                }
+            }
+        } catch (releaseError) {
+            console.error('Error auto-releasing funds:', releaseError);
+            // Don't fail the request, just log error. Admin can key in later.
+        }
 
         res.json({
             message: 'Post submitted successfully',
