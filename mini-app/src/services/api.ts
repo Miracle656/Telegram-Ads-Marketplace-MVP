@@ -74,6 +74,12 @@ export const api = {
         list: () => apiClient.get('/notifications'),
         markAsRead: (id: string) => apiClient.put(`/notifications/${id}/read`),
         markAllAsRead: () => apiClient.put('/notifications/mark-all-read')
+    },
+
+    // User
+    user: {
+        me: () => apiClient.get('/user/me'),
+        updateWallet: (walletAddress: string) => apiClient.put('/user/wallet', { walletAddress })
     }
 };
 

@@ -8,6 +8,7 @@ import campaignRoutes from './routes/campaigns.routes';
 import dealRoutes from './routes/deals.routes';
 import paymentRoutes from './routes/payments.routes';
 import notificationRoutes from './routes/notifications.routes';
+import userRoutes from './routes/user.routes';
 import { initBot } from './bot';
 import { startCronJobs } from './jobs';
 
@@ -74,6 +75,7 @@ app.use('/api/campaigns', campaignRoutes);
 app.use('/api/deals', dealRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/user', userRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

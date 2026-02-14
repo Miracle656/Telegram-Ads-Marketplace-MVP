@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import useTelegramWebApp from './hooks/useTelegramWebApp';
+import { useWalletSync } from './hooks/useWalletSync';
 import ChannelOwnerDashboard from './pages/ChannelOwnerDashboard';
 import AdvertiserDashboard from './pages/AdvertiserDashboard';
 import DealFlow from './pages/DealFlow';
@@ -13,6 +14,7 @@ import '@telegram-apps/telegram-ui/dist/styles.css';
 // Inner component that can use navigation hooks (must be inside BrowserRouter)
 function AppContent() {
     const { user, webApp } = useTelegramWebApp();
+    const { walletAddress } = useWalletSync(); // Sync wallet to backend
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
     const location = useLocation();
