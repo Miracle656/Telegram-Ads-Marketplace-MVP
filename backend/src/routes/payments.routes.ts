@@ -86,6 +86,16 @@ router.post('/initiate', authMiddleware, async (req: Request, res: Response) => 
             }
         });
 
+        // Notify channel owner that payment has been initiated
+        await prisma.notification.create({
+            data: {
+                userId: dealWithParticipants.channel.owner.id,
+                message: `💰 Payment received for "${dealWithParticipants.channel.title}"! The advertiser has paid ${tonService.fromNanoton(BigInt(dealWithParticipants.agreedPrice))} TON. Please post the ad now.`,
+                link: `/deals/${dealId}`,
+                dealId: dealId
+            }
+        });
+
         res.status(201).json({
             paymentAddress: escrowAddress,
             amount: dealWithParticipants.agreedPrice,
