@@ -86,7 +86,10 @@ export default function DealFlow() {
             // Send transaction via TON Connect
             await tonConnectUI.sendTransaction(transaction);
 
-            // Step 3: Reload deal to check status
+            // Step 3: Mark payment as sent (updates deal status for both parties)
+            await api.payments.markSent(deal.id);
+
+            // Step 4: Reload deal to show updated status
             await loadDeal();
             alert('Payment sent! Waiting for confirmation...');
         } catch (error: any) {

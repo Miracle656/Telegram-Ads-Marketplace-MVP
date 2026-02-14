@@ -108,6 +108,37 @@ router.post('/initiate', authMiddleware, async (req: Request, res: Response) => 
 });
 
 /**
+ * POST /api/payments/:dealId/mark-sent - Mark payment as sent (after advertiser sends transaction)
+ */
+router.post('/:dealId/mark-sent', authMiddleware, async (req: Request, res: Response) => {
+    try {
+        const dealId = parseInt(req.params.dealId);
+
+        // Get deal and payment
+        const deal = await prisma.deal.findUnique({
+            where: { id: dealId },
+            include: { payment: true }
+        });
+
+        if (!deal || !deal.payment) {
+            res.status(404).json({ error: 'Payment not found' });
+            return;
+        }
+
+        // Update deal status to indicate payment is sent (pending confirmation)
+        await prisma.deal.update({
+            where: { id: dealId },
+            data: { status: DealStatus.PAYMENT_RECEIVED }
+        });
+
+        res.json({ success: true, message: 'Payment marked as sent' });
+    } catch (error) {
+        console.error('Error marking payment as sent:', error);
+        res.status(500).json({ error: 'Failed to mark payment as sent' });
+    }
+});
+
+/**
  * GET /api/payments/:dealId/status - Check payment status
  */
 router.get('/:dealId/status', authMiddleware, async (req: Request, res: Response) => {
