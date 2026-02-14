@@ -4,6 +4,7 @@ import { authMiddleware } from '../middleware/auth.middleware';
 import { verifyAdminMiddleware } from '../middleware/admin-verification.middleware';
 import { dealService } from '../services/deal.service';
 import { postingService } from '../services/posting.service';
+import { sendDealNotification } from '../bot';
 import { z } from 'zod';
 
 const router = Router();
@@ -375,6 +376,13 @@ router.post('/:id/submit-post', authMiddleware, async (req: Request, res: Respon
                 message: `🎉 Your ad has been posted on ${deal.channel.title}!\n\nView it here: ${postUrl}`
             }
         });
+
+        // Also send Telegram bot notification
+        await sendDealNotification(
+            deal.advertiser.telegramId.toString(),
+            `🎉 *Ad Posted!*\n\nYour ad has been posted on *${deal.channel.title}*!\n\n[View Post](${postUrl})`,
+            dealId.toString()
+        );
 
         res.json({
             message: 'Post submitted successfully',

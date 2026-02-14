@@ -3,6 +3,7 @@ import { PrismaClient, DealStatus } from '@prisma/client';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { tonService, EscrowStatus } from '../services/ton.service';
 import { dealService } from '../services/deal.service';
+import { sendDealNotification } from '../bot';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -95,6 +96,13 @@ router.post('/initiate', authMiddleware, async (req: Request, res: Response) => 
                 dealId: dealId
             }
         });
+
+        // Also send Telegram bot notification
+        await sendDealNotification(
+            dealWithParticipants.channel.owner.telegramId.toString(),
+            `💰 *Payment Received!*\n\nYou received ${tonService.fromNanoton(BigInt(dealWithParticipants.agreedPrice))} TON for "${dealWithParticipants.channel.title}"\n\nPlease post the ad now and mark it as posted in the deal page.`,
+            dealId.toString()
+        );
 
         res.status(201).json({
             paymentAddress: escrowAddress,
