@@ -76,7 +76,6 @@ export default function DealFlow() {
             };
 
             // Send transaction via TON Connect
-            const [tonConnectUI] = useTonConnectUI();
             await tonConnectUI.sendTransaction(transaction);
 
             // Step 3: Reload deal to check status
