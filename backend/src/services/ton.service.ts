@@ -132,14 +132,21 @@ export class TonService {
 
             console.log(`[TonService] Releasing funds from wallet: ${wallet.address.toString()}`);
 
-            // Send transaction (with retry)
+            // Check if contract is deployed
+            const state = await this.retry(() => this.client.getContractState(wallet.address));
+
             let seqno: number;
-            try {
-                seqno = await this.retry(() => contract.getSeqno());
-                console.log(`[TonService] Current seqno: ${seqno}`);
-            } catch (e) {
-                console.error('[TonService] Failed to get seqno:', e);
-                throw e;
+            if (state.state === 'active') {
+                try {
+                    seqno = await this.retry(() => contract.getSeqno());
+                    console.log(`[TonService] Wallet active, seqno: ${seqno}`);
+                } catch (e) {
+                    console.error('[TonService] Failed to get seqno:', e);
+                    throw e;
+                }
+            } else {
+                console.log(`[TonService] Wallet state: ${state.state}, using seqno 0`);
+                seqno = 0;
             }
 
             await this.retry(() => contract.sendTransfer({
