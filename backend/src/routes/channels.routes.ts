@@ -33,9 +33,17 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 20;
         const skip = (page - 1) * limit;
+        const ownerId = req.query.ownerId as string | undefined;
+
+        const where: any = { isActive: true };
+
+        // Filter by owner if specified
+        if (ownerId) {
+            where.ownerId = parseInt(ownerId);
+        }
 
         const channels = await prisma.channel.findMany({
-            where: { isActive: true },
+            where,
             include: {
                 owner: {
                     select: { username: true, firstName: true }
@@ -47,7 +55,7 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
             orderBy: { subscriberCount: 'desc' }
         });
 
-        const total = await prisma.channel.count({ where: { isActive: true } });
+        const total = await prisma.channel.count({ where });
 
         res.json({
             channels,
