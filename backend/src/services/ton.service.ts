@@ -133,9 +133,10 @@ export class TonService {
             }
 
             return 'success';
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error releasing funds:', error);
-            throw new Error('Failed to release funds');
+            const errorMessage = error.message || (typeof error === 'string' ? error : 'Unknown error');
+            throw new Error(`Failed to release funds: ${errorMessage}`);
         }
     }
 
