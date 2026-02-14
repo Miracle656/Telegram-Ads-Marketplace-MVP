@@ -40,8 +40,8 @@ router.post('/initiate', authMiddleware, async (req: Request, res: Response) => 
             return;
         }
 
-        // Get deal with channel owner info
-        const dealWithOwner = await prisma.deal.findUnique({
+        // Get deal with participants
+        const dealWithParticipants = await prisma.deal.findUnique({
             where: { id: dealId },
             include: {
                 payment: true,
@@ -49,37 +49,47 @@ router.post('/initiate', authMiddleware, async (req: Request, res: Response) => 
                     include: {
                         owner: true
                     }
-                }
+                },
+                advertiser: true
             }
         });
 
-        if (!dealWithOwner) {
+        if (!dealWithParticipants) {
             res.status(404).json({ error: 'Deal not found' });
             return;
         }
 
-        // Get channel owner's TON wallet address
-        const ownerWallet = dealWithOwner.channel.owner.walletAddress;
+        // Verify both parties have connected wallets
+        const advertiserWallet = dealWithParticipants.advertiser.walletAddress;
+        const beneficiaryWallet = dealWithParticipants.channel.owner.walletAddress;
 
-        if (!ownerWallet) {
+        if (!advertiserWallet) {
+            res.status(400).json({ error: 'Advertiser has not connected a TON wallet' });
+            return;
+        }
+
+        if (!beneficiaryWallet) {
             res.status(400).json({ error: 'Channel owner has not connected a TON wallet' });
             return;
         }
 
-        // Create payment record with owner's wallet as destination
+        // Use the deployed escrow contract
+        const escrowAddress = tonService.getEscrowContractAddress();
+
+        // Create payment record
         const payment = await prisma.payment.create({
             data: {
                 dealId,
-                escrowWallet: ownerWallet, // Direct payment to owner
-                encryptedKey: '', // No encryption needed for direct payments
-                amount: dealWithOwner.agreedPrice
+                escrowWallet: escrowAddress,
+                encryptedKey: '', // Not needed for smart contract escrow
+                amount: dealWithParticipants.agreedPrice
             }
         });
 
         res.status(201).json({
-            paymentAddress: ownerWallet,
-            amount: dealWithOwner.agreedPrice,
-            amountTON: tonService.fromNanoton(BigInt(dealWithOwner.agreedPrice))
+            paymentAddress: escrowAddress,
+            amount: dealWithParticipants.agreedPrice,
+            amountTON: tonService.fromNanoton(BigInt(dealWithParticipants.agreedPrice))
         });
     } catch (error) {
         console.error('Error initiating payment:', error);
