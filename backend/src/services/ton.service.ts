@@ -32,36 +32,18 @@ export class TonService {
     }
 
     /**
-     * Generate a new wallet for a deal
+     * Get escrow wallet for a deal
+     * Uses a single master escrow wallet that's already deployed
      */
     async generateDealWallet(): Promise<{ address: string; encryptedKey: string }> {
-        try {
-            // Generate new mnemonic
-            const mnemonic = await mnemonicNew();
-            const mnemonicString = mnemonic.join(' ');
+        // Use the master escrow wallet address (already deployed and can receive funds)
+        // For testnet, this should be YOUR wallet address that you control
+        const masterWallet = process.env.MASTER_ESCROW_WALLET || 'EQDhMrwyCrN4nfvROwnyp4xDCkt8UwacuXiDy4IXSpwjAxVR';
 
-            // Derive key pair
-            const keyPair = await mnemonicToPrivateKey(mnemonic);
-
-            // Create wallet contract
-            const wallet = WalletContractV4.create({
-                workchain: 0,
-                publicKey: keyPair.publicKey
-            });
-
-            const address = wallet.address.toString();
-
-            // Encrypt the mnemonic
-            const encryptedKey = CryptoJS.AES.encrypt(mnemonicString, ENCRYPTION_KEY).toString();
-
-            return {
-                address,
-                encryptedKey
-            };
-        } catch (error) {
-            console.error('Error generating wallet:', error);
-            throw new Error('Failed to generate wallet');
-        }
+        return {
+            address: masterWallet,
+            encryptedKey: '' // No key needed since we're using a single master wallet
+        };
     }
 
     /**

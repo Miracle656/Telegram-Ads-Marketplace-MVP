@@ -40,23 +40,46 @@ router.post('/initiate', authMiddleware, async (req: Request, res: Response) => 
             return;
         }
 
-        // Generate escrow wallet
-        const { address, encryptedKey } = await tonService.generateDealWallet();
+        // Get deal with channel owner info
+        const dealWithOwner = await prisma.deal.findUnique({
+            where: { id: dealId },
+            include: {
+                payment: true,
+                channel: {
+                    include: {
+                        owner: true
+                    }
+                }
+            }
+        });
 
-        // Create payment record
+        if (!dealWithOwner) {
+            res.status(404).json({ error: 'Deal not found' });
+            return;
+        }
+
+        // Get channel owner's TON wallet address
+        const ownerWallet = dealWithOwner.channel.owner.walletAddress;
+
+        if (!ownerWallet) {
+            res.status(400).json({ error: 'Channel owner has not connected a TON wallet' });
+            return;
+        }
+
+        // Create payment record with owner's wallet as destination
         const payment = await prisma.payment.create({
             data: {
                 dealId,
-                escrowWallet: address,
-                encryptedKey,
-                amount: deal.agreedPrice
+                escrowWallet: ownerWallet, // Direct payment to owner
+                encryptedKey: '', // No encryption needed for direct payments
+                amount: dealWithOwner.agreedPrice
             }
         });
 
         res.status(201).json({
-            paymentAddress: address,
-            amount: deal.agreedPrice,
-            amountTON: tonService.fromNanoton(BigInt(deal.agreedPrice))
+            paymentAddress: ownerWallet,
+            amount: dealWithOwner.agreedPrice,
+            amountTON: tonService.fromNanoton(BigInt(dealWithOwner.agreedPrice))
         });
     } catch (error) {
         console.error('Error initiating payment:', error);
