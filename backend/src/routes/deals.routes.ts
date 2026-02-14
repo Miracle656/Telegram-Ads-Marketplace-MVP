@@ -308,4 +308,82 @@ router.put('/:id/revise', authMiddleware, async (req: Request, res: Response) =>
     }
 });
 
+/**
+ * POST /api/deals/:id/submit-post - Channel owner submits proof they posted the ad
+ */
+router.post('/:id/submit-post', authMiddleware, async (req: Request, res: Response) => {
+    try {
+        const dealId = parseInt(req.params.id);
+        const telegramUser = (req as any).telegramUser;
+        const { postUrl } = req.body;
+
+        if (!postUrl) {
+            res.status(400).json({ error: 'Post URL is required' });
+            return;
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { telegramId: BigInt(telegramUser.id) }
+        });
+
+        if (!user) {
+            res.status(404).json({ error: 'User not found' });
+            return;
+        }
+
+        const deal = await prisma.deal.findUnique({
+            where: { id: dealId },
+            include: {
+                channel: true,
+                advertiser: true
+            }
+        });
+
+        if (!deal) {
+            res.status(404).json({ error: 'Deal not found' });
+            return;
+        }
+
+        // Verify user is channel owner
+        if (deal.channelOwnerId !== user.id) {
+            res.status(403).json({ error: 'Only channel owner can submit post proof' });
+            return;
+        }
+
+        // Check deal is in correct status
+        if (deal.status !== DealStatus.PAYMENT_RECEIVED) {
+            res.status(400).json({ error: 'Deal must be in PAYMENT_RECEIVED status. Current status: ' + deal.status });
+            return;
+        }
+
+        // Update deal status and store post URL
+        const updatedDeal = await prisma.deal.update({
+            where: { id: dealId },
+            data: {
+                status: DealStatus.POSTED
+            },
+            include: {
+                channel: true,
+                advertiser: true
+            }
+        });
+
+        // Notify advertiser
+        await prisma.notification.create({
+            data: {
+                userId: deal.advertiserId,
+                message: `🎉 Your ad has been posted on ${deal.channel.title}!\n\nView it here: ${postUrl}`
+            }
+        });
+
+        res.json({
+            message: 'Post submitted successfully',
+            deal: updatedDeal
+        });
+    } catch (error) {
+        console.error('Error submitting post:', error);
+        res.status(500).json({ error: 'Failed to submit post' });
+    }
+});
+
 export default router;

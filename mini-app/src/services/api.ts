@@ -54,7 +54,8 @@ export const api = {
         accept: (id: string) => apiClient.put(`/deals/${id}/accept`),
         submitCreative: (id: string, data: any) => apiClient.post(`/deals/${id}/creative`, data),
         approve: (id: string, data: any) => apiClient.put(`/deals/${id}/approve`, data),
-        revise: (id: string, data: any) => apiClient.put(`/deals/${id}/revise`, data)
+        revise: (id: string, data: any) => apiClient.put(`/deals/${id}/revise`, data),
+        submitPost: (id: string, postUrl: string) => apiClient.post(`/deals/${id}/submit-post`, { postUrl })
     },
 
     // Payments
