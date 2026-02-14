@@ -91,7 +91,10 @@ export default function DealFlow() {
             alert('Payment sent! Waiting for confirmation...');
         } catch (error: any) {
             console.error('Payment failed:', error);
-            alert(error.message || 'Payment failed. Please try again.');
+
+            // Extract error message from backend response
+            const errorMessage = error.response?.data?.error || error.message || 'Payment failed. Please try again.';
+            alert(errorMessage);
         } finally {
             setActionLoading(false);
         }
