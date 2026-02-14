@@ -45,6 +45,7 @@ export default function DealFlow() {
     const [creativeContent, setCreativeContent] = useState('');
     const [feedback, setFeedback] = useState('');
     const [actionLoading, setActionLoading] = useState(false);
+    const [postUrl, setPostUrl] = useState('');
     const [tonConnectUI] = useTonConnectUI();
 
     // Determine roles
@@ -97,6 +98,27 @@ export default function DealFlow() {
 
             // Extract error message from backend response
             const errorMessage = error.response?.data?.error || error.message || 'Payment failed. Please try again.';
+            alert(errorMessage);
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleSubmitPost = async () => {
+        if (!postUrl.trim()) {
+            alert('Please enter the post URL');
+            return;
+        }
+
+        setActionLoading(true);
+        try {
+            await api.deals.submitPost(deal!.id, postUrl);
+            alert('✅ Post submitted! Advertiser has been notified.');
+            await loadDeal();
+            setPostUrl(''); // Clear input
+        } catch (error: any) {
+            console.error('Error submitting post:', error);
+            const errorMessage = error.response?.data?.error || 'Failed to submit post';
             alert(errorMessage);
         } finally {
             setActionLoading(false);
@@ -293,6 +315,52 @@ export default function DealFlow() {
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 text-center">
                             Funds are held safely in the smart contract until the ad is posted.
                         </p>
+                    </div>
+                </div>
+            )}
+
+            {/* Post Submission - Only for Channel Owner after Payment */}
+            {deal.status === 'PAYMENT_RECEIVED' && (
+                <div className="p-4">
+                    <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
+                        <h3 className="font-semibold mb-2 flex items-center gap-2 text-green-900 dark:text-green-100">
+                            <CheckCircle className="w-5 h-5" />
+                            Payment Received!
+                        </h3>
+
+                        {isChannelOwner ? (
+                            <>
+                                <p className="text-sm mb-4 text-gray-700 dark:text-gray-300">
+                                    Great! The advertiser has paid <b>{(deal.agreedPrice / 1000000000).toFixed(2)} TON</b>.
+                                    Please post the ad on your channel and paste the post link below.
+                                </p>
+                                <input
+                                    type="url"
+                                    value={postUrl}
+                                    onChange={(e) => setPostUrl(e.target.value)}
+                                    placeholder="https://t.me/yourchannel/123"
+                                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 mb-3"
+                                />
+                                <button
+                                    onClick={handleSubmitPost}
+                                    disabled={actionLoading || !postUrl.trim()}
+                                    className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white py-3 rounded-xl font-medium shadow-lg shadow-green-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                                >
+                                    {actionLoading ? (
+                                        <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
+                                    ) : (
+                                        <>
+                                            <Send className="w-4 h-4" />
+                                            <span>Mark as Posted</span>
+                                        </>
+                                    )}
+                                </button>
+                            </>
+                        ) : (
+                            <p className="text-sm text-center text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700/50 p-3 rounded-lg">
+                                Waiting for channel owner to post the ad...
+                            </p>
+                        )}
                     </div>
                 </div>
             )}
