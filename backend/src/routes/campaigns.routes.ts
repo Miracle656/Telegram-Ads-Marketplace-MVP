@@ -31,9 +31,64 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
             where: { telegramId: BigInt(telegramUser.id) }
         });
 
+        if (!user) {
+            res.status(404).json({ error: 'User not found' });
+            return;
+        }
+
         // Only show user's own campaigns
+        const campaigns = await prisma.campaign.findMany({
+            where: { isActive: true, advertiserId: user.id },
+            include: {
+                advertiser: {
+                    select: { username: true, firstName: true }
+                },
+                _count: {
+                    select: { applications: true }
+                }
+            },
+            skip,
+            take: limit,
+            orderBy: { createdAt: 'desc' }
+        });
+
+        const total = await prisma.campaign.count({
+            where: { isActive: true, advertiserId: user.id }
+        });
+
+        res.json({
+            campaigns,
+            pagination: {
+                page,
+                limit,
+                total,
+                pages: Math.ceil(total / limit)
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching campaigns:', error);
+        res.status(500).json({ error: 'Failed to fetch campaigns' });
+    }
+});
+
+/**
+ * GET /api/campaigns/browse - Browse other users' campaigns
+ */
+router.get('/browse', authMiddleware, async (req: Request, res: Response) => {
+    try {
+        const telegramUser = (req as any).telegramUser;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 20;
+        const skip = (page - 1) * limit;
+
+        // Find the current user
+        const user = await prisma.user.findUnique({
+            where: { telegramId: BigInt(telegramUser.id) }
+        });
+
+        // Show all active campaigns EXCEPT user's own
         const whereClause = user
-            ? { isActive: true, advertiserId: user.id }
+            ? { isActive: true, advertiserId: { not: user.id } }
             : { isActive: true };
 
         const campaigns = await prisma.campaign.findMany({

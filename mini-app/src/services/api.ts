@@ -40,6 +40,7 @@ export const api = {
     // Campaigns
     campaigns: {
         list: (params?: any) => apiClient.get('/campaigns', { params }),
+        browse: (params?: any) => apiClient.get('/campaigns/browse', { params }),
         create: (data: any) => apiClient.post('/campaigns', data),
         apply: (id: string, data: any) => apiClient.post(`/campaigns/${id}/apply`, data),
         getApplications: (id: string) => apiClient.get(`/campaigns/${id}/applications`)

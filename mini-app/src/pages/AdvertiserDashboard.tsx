@@ -28,6 +28,7 @@ export default function AdvertiserDashboard() {
     const { user } = useTelegramWebApp();
     const [view, setView] = useState<'campaigns' | 'channels'>('campaigns');
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+    const [browseCampaigns, setBrowseCampaigns] = useState<Campaign[]>([]);
     const [channels, setChannels] = useState<Channel[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCreateCampaign, setShowCreateCampaign] = useState(false);
@@ -54,12 +55,14 @@ export default function AdvertiserDashboard() {
 
     const loadData = async () => {
         try {
-            const [campaignsRes, channelsRes] = await Promise.all([
+            const [campaignsRes, browseCampaignsRes, channelsRes] = await Promise.all([
                 api.campaigns.list(),
+                api.campaigns.browse(),
                 api.channels.list()
             ]);
 
             setCampaigns(campaignsRes.data.campaigns || []);
+            setBrowseCampaigns(browseCampaignsRes.data.campaigns || []);
             setChannels(channelsRes.data.channels || []);
         } catch (error) {
             console.error('Error loading data:', error);
@@ -265,91 +268,128 @@ export default function AdvertiserDashboard() {
 
             {view === 'campaigns' && (
                 <div className="p-4">
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">My Campaigns</h2>
-                        <button
-                            onClick={() => setShowCreateCampaign(!showCreateCampaign)}
-                            className="flex items-center gap-2 tg-button px-4 py-2 rounded-lg text-sm"
-                        >
-                            <Plus className="w-4 h-4" />
-                            Create
-                        </button>
+                    {/* My Campaigns Section */}
+                    <div className="mb-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">My Campaigns</h2>
+                            <button
+                                onClick={() => setShowCreateCampaign(!showCreateCampaign)}
+                                className="flex items-center gap-2 tg-button px-4 py-2 rounded-lg text-sm"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Create
+                            </button>
+                        </div>
+
+                        {showCreateCampaign && (
+                            <form onSubmit={handleCreateCampaign} className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 shadow-sm">
+                                <h3 className="font-semibold mb-3 text-gray-900 dark:text-white">Create Campaign</h3>
+                                <div className="space-y-3">
+                                    <input
+                                        type="text"
+                                        placeholder="Campaign Title"
+                                        value={newCampaign.title}
+                                        onChange={(e) => setNewCampaign({ ...newCampaign, title: e.target.value })}
+                                        className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                        required
+                                    />
+                                    <textarea
+                                        placeholder="Campaign Brief"
+                                        value={newCampaign.brief}
+                                        onChange={(e) => setNewCampaign({ ...newCampaign, brief: e.target.value })}
+                                        className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                        rows={4}
+                                        required
+                                    />
+                                    <input
+                                        type="number"
+                                        placeholder="Budget (TON)"
+                                        value={newCampaign.budget}
+                                        onChange={(e) => setNewCampaign({ ...newCampaign, budget: parseFloat(e.target.value) })}
+                                        className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                        min="0.1"
+                                        step="0.1"
+                                        required
+                                    />
+                                    <input
+                                        type="number"
+                                        placeholder="Min Subscribers"
+                                        value={newCampaign.minSubscribers}
+                                        onChange={(e) => setNewCampaign({ ...newCampaign, minSubscribers: parseInt(e.target.value) })}
+                                        className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    />
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="submit"
+                                            className="flex-1 tg-button py-2 rounded-lg flex items-center justify-center"
+                                            disabled={createCampaignLoading}
+                                        >
+                                            {createCampaignLoading ? <Spinner size="s" /> : 'Create Campaign'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowCreateCampaign(false)}
+                                            className="flex-1 bg-gray-200 dark:bg-gray-700 py-2 rounded-lg"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        )}
+
+                        <div className="space-y-3">
+                            {campaigns.length > 0 ? (
+                                campaigns.map((campaign) => (
+                                    <div
+                                        key={campaign.id}
+                                        onClick={() => handleCampaignClick(campaign)}
+                                        className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition"
+                                    >
+                                        <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">{campaign.title}</h3>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{campaign.brief}</p>
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="font-semibold text-gray-900 dark:text-white">{(campaign.budget / 1000000000).toFixed(2)} TON</span>
+                                            <span className="text-gray-600 dark:text-gray-400">
+                                                {campaign.minSubscribers ? `${campaign.minSubscribers.toLocaleString()}+ subs` : 'No min'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                                    No campaigns yet. Click "Create" to start!
+                                </p>
+                            )}
+                        </div>
                     </div>
 
-                    {showCreateCampaign && (
-                        <form onSubmit={handleCreateCampaign} className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 shadow-sm">
-                            <h3 className="font-semibold mb-3 text-gray-900 dark:text-white">Create Campaign</h3>
-                            <div className="space-y-3">
-                                <input
-                                    type="text"
-                                    placeholder="Campaign Title"
-                                    value={newCampaign.title}
-                                    onChange={(e) => setNewCampaign({ ...newCampaign, title: e.target.value })}
-                                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                    required
-                                />
-                                <textarea
-                                    placeholder="Campaign Brief"
-                                    value={newCampaign.brief}
-                                    onChange={(e) => setNewCampaign({ ...newCampaign, brief: e.target.value })}
-                                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                    rows={4}
-                                    required
-                                />
-                                <input
-                                    type="number"
-                                    placeholder="Budget (TON)"
-                                    value={newCampaign.budget}
-                                    onChange={(e) => setNewCampaign({ ...newCampaign, budget: parseFloat(e.target.value) })}
-                                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                    min="0.1"
-                                    step="0.1"
-                                    required
-                                />
-                                <input
-                                    type="number"
-                                    placeholder="Min Subscribers"
-                                    value={newCampaign.minSubscribers}
-                                    onChange={(e) => setNewCampaign({ ...newCampaign, minSubscribers: parseInt(e.target.value) })}
-                                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                />
-                                <div className="flex gap-2">
-                                    <button
-                                        type="submit"
-                                        className="flex-1 tg-button py-2 rounded-lg flex items-center justify-center"
-                                        disabled={createCampaignLoading}
+                    {/* Browse Other Campaigns Section */}
+                    <div>
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Browse Campaigns</h2>
+                        <div className="space-y-3">
+                            {browseCampaigns.length > 0 ? (
+                                browseCampaigns.map((campaign) => (
+                                    <div
+                                        key={campaign.id}
+                                        className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm"
                                     >
-                                        {createCampaignLoading ? <Spinner size="s" /> : 'Create Campaign'}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowCreateCampaign(false)}
-                                        className="flex-1 bg-gray-200 dark:bg-gray-700 py-2 rounded-lg"
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    )}
-
-                    <div className="space-y-3">
-                        {campaigns.map((campaign) => (
-                            <div
-                                key={campaign.id}
-                                onClick={() => handleCampaignClick(campaign)}
-                                className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition"
-                            >
-                                <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">{campaign.title}</h3>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{campaign.brief}</p>
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="font-semibold text-gray-900 dark:text-white">{(campaign.budget / 1000000000).toFixed(2)} TON</span>
-                                    <span className="text-gray-600 dark:text-gray-400">
-                                        {campaign.minSubscribers ? `${campaign.minSubscribers.toLocaleString()}+ subs` : 'No min'}
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
+                                        <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">{campaign.title}</h3>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{campaign.brief}</p>
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="font-semibold text-gray-900 dark:text-white">{(campaign.budget / 1000000000).toFixed(2)} TON</span>
+                                            <span className="text-gray-600 dark:text-gray-400">
+                                                {campaign.minSubscribers ? `${campaign.minSubscribers.toLocaleString()}+ subs` : 'No min'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                                    No other campaigns available.
+                                </p>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
