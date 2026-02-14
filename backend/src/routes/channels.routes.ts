@@ -46,7 +46,12 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
                 });
                 if (user) {
                     where.ownerId = user.id;
+                } else {
+                    // Authenticated but user not in DB? Should not happen but safe fallback
+                    where.ownerId = -1;
                 }
+            } else {
+                where.ownerId = -1;
             }
         } else if (ownerId) {
             where.ownerId = parseInt(ownerId);
