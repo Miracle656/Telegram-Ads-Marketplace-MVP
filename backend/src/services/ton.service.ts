@@ -130,8 +130,17 @@ export class TonService {
             // Open wallet
             const contract = this.client.open(wallet);
 
+            console.log(`[TonService] Releasing funds from wallet: ${wallet.address.toString()}`);
+
             // Send transaction (with retry)
-            const seqno = await this.retry(() => contract.getSeqno());
+            let seqno: number;
+            try {
+                seqno = await this.retry(() => contract.getSeqno());
+                console.log(`[TonService] Current seqno: ${seqno}`);
+            } catch (e) {
+                console.error('[TonService] Failed to get seqno:', e);
+                throw e;
+            }
 
             await this.retry(() => contract.sendTransfer({
                 seqno,
