@@ -52,10 +52,15 @@ router.put('/wallet', authMiddleware, async (req: Request, res: Response) => {
  */
 router.get('/me', authMiddleware, async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).userId;
+        const telegramUser = (req as any).telegramUser;
+
+        if (!telegramUser || !telegramUser.id) {
+            res.status(401).json({ error: 'Unauthorized' });
+            return;
+        }
 
         const user = await prisma.user.findUnique({
-            where: { id: userId },
+            where: { telegramId: BigInt(telegramUser.id) },
             select: {
                 id: true,
                 telegramId: true,
