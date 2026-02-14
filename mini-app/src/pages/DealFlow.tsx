@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { useTonConnectUI } from '@tonconnect/ui-react';
-import { toNano } from '@ton/core';
+import { toNano, beginCell } from '@ton/core';
 import { useTelegramWebApp } from '../hooks/useTelegramWebApp';
 import { ArrowLeft, CheckCircle, Send, Edit, ArrowRight } from 'lucide-react';
 import { Spinner } from '@telegram-apps/telegram-ui';
@@ -62,15 +62,23 @@ export default function DealFlow() {
 
             console.log(`Payment Address: ${paymentAddress}, Amount: ${amountTON} TON`);
 
-            // Step 2: Send payment to the escrow wallet using TON Connect
+            // Step 2: Send payment to escrow contract with Deposit message
             const amount = toNano(amountTON.toString());
+
+            // Create Deposit message payload (opcode 0x02)
+            const depositPayload = beginCell()
+                .storeUint(0x02, 8)  // Opcode for Deposit
+                .endCell()
+                .toBoc()
+                .toString('base64');
 
             const transaction = {
                 validUntil: Math.floor(Date.now() / 1000) + 600, // 10 minutes
                 messages: [
                     {
                         address: paymentAddress,
-                        amount: amount.toString()
+                        amount: amount.toString(),
+                        payload: depositPayload  // Include Deposit opcode
                     }
                 ]
             };
