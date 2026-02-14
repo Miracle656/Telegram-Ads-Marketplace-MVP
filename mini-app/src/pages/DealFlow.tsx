@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { useEscrow } from '../hooks/useEscrow';
+import { useTonConnectUI } from '@tonconnect/ui-react';
+import { toNano } from '@ton/core';
 import { useTelegramWebApp } from '../hooks/useTelegramWebApp';
 import { ArrowLeft, CheckCircle, Send, Edit, ArrowRight } from 'lucide-react';
 import { Spinner } from '@telegram-apps/telegram-ui';
@@ -44,7 +45,7 @@ export default function DealFlow() {
     const [creativeContent, setCreativeContent] = useState('');
     const [feedback, setFeedback] = useState('');
     const [actionLoading, setActionLoading] = useState(false);
-    const { deposit, loading: escrowLoading, error: escrowError } = useEscrow();
+    const [tonConnectUI] = useTonConnectUI();
 
     // Determine roles
     const isAdvertiser = deal && user ? String(deal.advertiser.telegramId) === String(user.id) : false;
@@ -52,24 +53,40 @@ export default function DealFlow() {
 
     const handlePayment = async () => {
         if (!deal) return;
+
+        setActionLoading(true);
         try {
-            // Amount in TON
-            const amount = deal.agreedPrice / 1000000000;
+            // Step 1: Initiate payment to get unique escrow wallet address
+            const initiateResponse = await api.payments.initiate(deal.id);
+            const { paymentAddress, amountTON } = initiateResponse.data;
 
-            // Initiate payment record in backend first if not exists
-            if (!deal.payment) {
-                await api.payments.initiate(deal.id);
-            }
+            console.log(`Payment Address: ${paymentAddress}, Amount: ${amountTON} TON`);
 
-            // Trigger wallet transaction
-            await deposit(amount);
+            // Step 2: Send payment to the escrow wallet using TON Connect
+            const amount = toNano(amountTON.toString());
 
-            // Reload deal to check status (might need polling or websocket in real app)
-            loadDeal();
-            alert('Payment initiated! Please wait for confirmation.');
-        } catch (error) {
+            const transaction = {
+                validUntil: Math.floor(Date.now() / 1000) + 600, // 10 minutes
+                messages: [
+                    {
+                        address: paymentAddress,
+                        amount: amount.toString()
+                    }
+                ]
+            };
+
+            // Send transaction via TON Connect
+            const [tonConnectUI] = useTonConnectUI();
+            await tonConnectUI.sendTransaction(transaction);
+
+            // Step 3: Reload deal to check status
+            await loadDeal();
+            alert('Payment sent! Waiting for confirmation...');
+        } catch (error: any) {
             console.error('Payment failed:', error);
-            // Error handling is managed by hook state
+            alert(error.message || 'Payment failed. Please try again.');
+        } finally {
+            setActionLoading(false);
         }
     };
 
@@ -240,10 +257,10 @@ export default function DealFlow() {
                         {isAdvertiser ? (
                             <button
                                 onClick={handlePayment}
-                                disabled={escrowLoading}
+                                disabled={actionLoading}
                                 className="w-full bg-[#0088cc] text-white py-3 rounded-xl font-medium shadow-lg shadow-blue-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                             >
-                                {escrowLoading ? (
+                                {actionLoading ? (
                                     <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
                                 ) : (
                                     <>
@@ -258,9 +275,7 @@ export default function DealFlow() {
                             </div>
                         )}
 
-                        {escrowError && (
-                            <p className="text-xs text-red-500 mt-2 text-center">{escrowError}</p>
-                        )}
+
 
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 text-center">
                             Funds are held safely in the smart contract until the ad is posted.
