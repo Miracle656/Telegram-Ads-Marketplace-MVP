@@ -10,7 +10,7 @@ const prisma = new PrismaClient();
  */
 router.put('/wallet', authMiddleware, async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).userId;
+        const telegramUser = (req as any).telegramUser;
         const { walletAddress } = req.body;
 
         if (!walletAddress) {
@@ -18,15 +18,28 @@ router.put('/wallet', authMiddleware, async (req: Request, res: Response) => {
             return;
         }
 
-        // Update user's wallet address
-        const updatedUser = await prisma.user.update({
-            where: { id: userId },
-            data: { walletAddress }
+        if (!telegramUser || !telegramUser.id) {
+            res.status(401).json({ error: 'Unauthorized' });
+            return;
+        }
+
+        // Find or create user by telegramId
+        const user = await prisma.user.upsert({
+            where: { telegramId: BigInt(telegramUser.id) },
+            update: { walletAddress },
+            create: {
+                telegramId: BigInt(telegramUser.id),
+                username: telegramUser.username,
+                firstName: telegramUser.firstName,
+                lastName: telegramUser.lastName,
+                walletAddress,
+                role: 'BOTH'
+            }
         });
 
         res.json({
             message: 'Wallet address updated successfully',
-            walletAddress: updatedUser.walletAddress
+            walletAddress: user.walletAddress
         });
     } catch (error) {
         console.error('Error updating wallet address:', error);
