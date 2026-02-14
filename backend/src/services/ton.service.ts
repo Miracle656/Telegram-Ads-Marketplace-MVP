@@ -82,10 +82,21 @@ export class TonService {
         amount: bigint
     ): Promise<string> {
         try {
-            // Decrypt the mnemonic
-            const bytes = CryptoJS.AES.decrypt(encryptedKey, ENCRYPTION_KEY);
-            const mnemonicString = bytes.toString(CryptoJS.enc.Utf8);
-            const mnemonic = mnemonicString.split(' ');
+            let mnemonic: string[];
+
+            if (!encryptedKey || encryptedKey === 'EMPTY') {
+                // Use master wallet mnemonic from env
+                const mnemonicStr = process.env.WALLET_MNEMONIC;
+                if (!mnemonicStr) {
+                    throw new Error('No encrypted key and WALLET_MNEMONIC not set');
+                }
+                mnemonic = mnemonicStr.split(' ');
+            } else {
+                // Decrypt the mnemonic
+                const bytes = CryptoJS.AES.decrypt(encryptedKey, ENCRYPTION_KEY);
+                const mnemonicString = bytes.toString(CryptoJS.enc.Utf8);
+                mnemonic = mnemonicString.split(' ');
+            }
 
             // Derive key pair
             const keyPair = await mnemonicToPrivateKey(mnemonic);

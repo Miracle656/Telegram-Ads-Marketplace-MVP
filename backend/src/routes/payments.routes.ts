@@ -386,13 +386,17 @@ router.get('/escrow/contract', (req: Request, res: Response) => {
 });
 
 /**
- * POST /api/payments/admin/release-stuck - Admin endpoint to release funds for completed deals
- * that were not automatically released.
+ * GET /api/payments/admin/release-stuck - Admin endpoint to release funds for completed deals
+ * Usage: /api/payments/admin/release-stuck?secret=admin_fix_funds
  */
-router.post('/admin/release-stuck', authMiddleware, async (req: Request, res: Response) => {
+router.get('/admin/release-stuck', async (req: Request, res: Response) => {
     try {
-        // Authenticate admin (in real app, check role. Here assuming admin knows the endpoint)
-        // Or check a secret header
+        // Simple security check for this maintenance endpoint
+        const { secret } = req.query;
+        if (secret !== 'admin_fix_funds') {
+            res.status(403).json({ error: 'Unauthorized' });
+            return;
+        }
 
         console.log('🔄 Starting retroactive fund release...');
 
