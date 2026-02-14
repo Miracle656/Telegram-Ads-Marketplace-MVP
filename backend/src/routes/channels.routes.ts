@@ -37,8 +37,18 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
 
         const where: any = { isActive: true };
 
-        // Filter by owner if specified
-        if (ownerId) {
+        // Filter by owner if specified or mine=true
+        if (req.query.mine === 'true') {
+            const telegramUser = (req as any).telegramUser;
+            if (telegramUser) {
+                const user = await prisma.user.findUnique({
+                    where: { telegramId: BigInt(telegramUser.id) }
+                });
+                if (user) {
+                    where.ownerId = user.id;
+                }
+            }
+        } else if (ownerId) {
             where.ownerId = parseInt(ownerId);
         }
 

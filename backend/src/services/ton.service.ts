@@ -125,11 +125,20 @@ export class TonService {
                 ]
             });
 
-            // Wait for transaction to be processed
+            // Wait for transaction to be processed (with less aggressive polling)
             let currentSeqno = seqno;
-            while (currentSeqno === seqno) {
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                currentSeqno = await contract.getSeqno();
+            let retries = 0;
+            const maxRetries = 20; // Wait up to ~100 seconds
+
+            while (currentSeqno === seqno && retries < maxRetries) {
+                await new Promise(resolve => setTimeout(resolve, 5000));
+                try {
+                    currentSeqno = await contract.getSeqno();
+                } catch (e) {
+                    console.warn('Error checking seqno, retrying...', e);
+                    // Ignore transient errors during polling
+                }
+                retries++;
             }
 
             return 'success';

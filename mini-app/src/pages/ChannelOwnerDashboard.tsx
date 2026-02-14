@@ -55,7 +55,7 @@ export default function ChannelOwnerDashboard() {
         try {
             // For demo purposes - in production, filter by owner
             const [channelsRes, dealsRes] = await Promise.all([
-                api.channels.list(),
+                api.channels.list({ mine: true }),
                 api.deals.list()
             ]);
 
