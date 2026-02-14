@@ -1,10 +1,9 @@
 import cron from 'node-cron';
-import { PrismaClient, DealStatus } from '@prisma/client';
+import { DealStatus } from '@prisma/client';
+import { prisma } from '../config/db';
 import { postingService } from '../services/posting.service';
 import { dealService } from '../services/deal.service';
 import axios from 'axios';
-
-const prisma = new PrismaClient();
 
 /**
  * Verify posted ads and release funds when verification is complete

@@ -1,10 +1,9 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../config/db';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { z } from 'zod';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 const createCampaignSchema = z.object({
     title: z.string().min(3),

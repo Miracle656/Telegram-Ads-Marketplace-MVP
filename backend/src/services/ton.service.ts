@@ -72,6 +72,26 @@ export class TonService {
         }
     }
 
+    private sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+    private async retry<T>(fn: () => Promise<T>, retries = 5, delay = 2000): Promise<T> {
+        try {
+            return await fn();
+        } catch (error: any) {
+            // Check for rate limit error (429)
+            const isRateLimit = error.response?.status === 429 ||
+                error.code === 429 ||
+                (error.message && error.message.includes('429'));
+
+            if (retries > 0 && isRateLimit) {
+                console.warn(`Rate limited, retrying in ${delay}ms... (${retries} left)`);
+                await this.sleep(delay);
+                return this.retry(fn, retries - 1, delay * 2);
+            }
+            throw error;
+        }
+    }
+
     /**
      * Release funds from escrow to channel owner
      */
@@ -110,10 +130,10 @@ export class TonService {
             // Open wallet
             const contract = this.client.open(wallet);
 
-            // Send transaction
-            const seqno = await contract.getSeqno();
+            // Send transaction (with retry)
+            const seqno = await this.retry(() => contract.getSeqno());
 
-            await contract.sendTransfer({
+            await this.retry(() => contract.sendTransfer({
                 seqno,
                 secretKey: keyPair.secretKey,
                 messages: [
@@ -123,7 +143,7 @@ export class TonService {
                         bounce: false
                     })
                 ]
-            });
+            }));
 
             // Wait for transaction to be processed (with less aggressive polling)
             let currentSeqno = seqno;

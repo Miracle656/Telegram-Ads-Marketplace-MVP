@@ -1,8 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../config/db';
 import { verifyUserIsAdmin } from '../services/telegram.service';
-
-const prisma = new PrismaClient();
 
 /**
  * Middleware to verify user is still an admin before financial operations

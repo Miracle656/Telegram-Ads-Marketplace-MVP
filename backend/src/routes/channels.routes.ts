@@ -1,12 +1,11 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../config/db';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { verifyAdminMiddleware } from '../middleware/admin-verification.middleware';
 import { fetchChannelStats, verifyBotIsAdmin, getChannelAdmins, getChannelDetails } from '../services/telegram.service';
 import { z } from 'zod';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // Validation schemas
 const createChannelSchema = z.object({

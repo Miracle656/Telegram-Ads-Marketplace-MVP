@@ -1,12 +1,12 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient, DealStatus, PaymentStatus } from '@prisma/client';
+import { prisma } from '../config/db';
+import { DealStatus, PaymentStatus } from '@prisma/client';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { tonService, EscrowStatus } from '../services/ton.service';
 import { dealService } from '../services/deal.service';
 import { sendDealNotification } from '../bot';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 /**
  * POST /api/payments/initiate - Initiate payment for deal

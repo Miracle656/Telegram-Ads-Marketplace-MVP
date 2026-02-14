@@ -1,9 +1,8 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../config/db';
 import { authMiddleware } from '../middleware/auth.middleware';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 /**
  * PUT /api/user/wallet - Update user's wallet address

@@ -1,9 +1,7 @@
 import cron from 'node-cron';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../config/db';
 import { dealService } from '../services/deal.service';
 import { tonService } from '../services/ton.service';
-
-const prisma = new PrismaClient();
 
 /**
  * Check for timed-out deals and cancel them

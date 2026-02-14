@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient, DealStatus, CreativeStatus, PaymentStatus } from '@prisma/client';
+import { prisma } from '../config/db';
+import { DealStatus, CreativeStatus, PaymentStatus } from '@prisma/client';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { verifyAdminMiddleware } from '../middleware/admin-verification.middleware';
 import { dealService } from '../services/deal.service';
@@ -9,7 +10,6 @@ import { sendDealNotification } from '../bot';
 import { z } from 'zod';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 const createDealSchema = z.object({
     channelId: z.string(),
