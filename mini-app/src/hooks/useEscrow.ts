@@ -28,9 +28,10 @@ export function useEscrow() {
             const contractAddress = data.data.contractAddress;
 
             // Construct payload: opcode 0x02 (Deposit)
-            // struct(0x00000002) Deposit {}
+            // IMPORTANT: Contract expects 8-bit opcode, not 32-bit
+            // struct(0x02) Deposit {}
             const body = beginCell()
-                .storeUint(2, 32) // opcode: Deposit
+                .storeUint(0x02, 8) // opcode: Deposit (8 bits, matches contract)
                 .endCell();
 
             const amountNano = toNano(amountTon.toString());
