@@ -4,6 +4,7 @@ import useTelegramWebApp from './hooks/useTelegramWebApp';
 import ChannelOwnerDashboard from './pages/ChannelOwnerDashboard';
 import AdvertiserDashboard from './pages/AdvertiserDashboard';
 import DealFlow from './pages/DealFlow';
+import NotificationBell from './components/NotificationBell';
 import { Spinner, AppRoot } from '@telegram-apps/telegram-ui';
 import { User, Megaphone } from 'lucide-react';
 import { TonConnectButton } from '@tonconnect/ui-react';
@@ -108,8 +109,9 @@ function AppContent() {
                 </div>
             </div>
 
-            {/* TON Connect Button */}
-            <div className="fixed top-4 right-4 z-50">
+            {/* Header with Notifications and TON Connect */}
+            <div className="fixed top-4 right-4 z-50 flex items-center gap-3">
+                <NotificationBell />
                 <TonConnectButton />
             </div>
         </div>
