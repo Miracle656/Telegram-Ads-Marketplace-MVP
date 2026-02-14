@@ -113,13 +113,57 @@ export const getBot = (): TelegramBot => {
     return bot;
 };
 
+/**
+ * Create an in-app notification and optionally send via Telegram
+ */
+export const createNotification = async (
+    userId: number,
+    message: string,
+    dealId?: number,
+    link?: string
+): Promise<void> => {
+    try {
+        // Create in-app notification
+        await prisma.notification.create({
+            data: {
+                userId,
+                message,
+                dealId,
+                link
+            }
+        });
+        console.log(`📬 In-app notification created for user ${userId}`);
+    } catch (error) {
+        console.error(`Failed to create in-app notification for user ${userId}:`, error);
+    }
+};
+
 export const sendDealNotification = async (
     telegramId: string,
     message: string,
     dealId: string
 ): Promise<void> => {
     try {
+        // Find user to get database ID
+        const user = await prisma.user.findUnique({
+            where: { telegramId: BigInt(telegramId) }
+        });
+
+        if (user) {
+            // Create in-app notification
+            await createNotification(
+                user.id,
+                message,
+                parseInt(dealId),
+                `/deals/${dealId}`
+            );
+        }
+
+        // Try to send Telegram notification
         const chatId = parseInt(telegramId);
+        console.log(`📤 Sending notification to user ${telegramId} (chat ${chatId})`);
+        console.log(`   Message: ${message.substring(0, 50)}...`);
+
         await bot.sendMessage(chatId, message, {
             reply_markup: {
                 inline_keyboard: [[
@@ -127,7 +171,15 @@ export const sendDealNotification = async (
                 ]]
             }
         });
-    } catch (error) {
-        console.error('Failed to send notification:', error);
+
+        console.log(`✅ Notification sent successfully to user ${telegramId}`);
+    } catch (error: any) {
+        console.error(`❌ Failed to send Telegram notification to user ${telegramId}:`, error.message);
+        console.error(`   Error code: ${error.code}`);
+        // If user hasn't started the bot, they won't receive messages
+        if (error.code === 403) {
+            console.error(`   → User ${telegramId} has not started the bot yet`);
+            console.log(`   ℹ️  In-app notification was still created`);
+        }
     }
 };

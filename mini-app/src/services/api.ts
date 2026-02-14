@@ -66,6 +66,13 @@ export const api = {
         getEscrowStatus: () => apiClient.get('/payments/escrow/status'),
         getDepositLink: (amountTon: number) => apiClient.post('/payments/escrow/deposit-link', { amountTon }),
         getContractAddress: () => apiClient.get('/payments/escrow/contract')
+    },
+
+    // Notifications
+    notifications: {
+        list: () => apiClient.get('/notifications'),
+        markAsRead: (id: string) => apiClient.put(`/notifications/${id}/read`),
+        markAllAsRead: () => apiClient.put('/notifications/mark-all-read')
     }
 };
 
