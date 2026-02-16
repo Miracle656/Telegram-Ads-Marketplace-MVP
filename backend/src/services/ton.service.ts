@@ -1,4 +1,4 @@
-import { Address, TonClient, WalletContractV4, internal, fromNano, toNano, beginCell, Cell } from '@ton/ton';
+import { Address, TonClient, WalletContractV4, internal, fromNano, toNano, beginCell, Cell, SendMode } from '@ton/ton';
 import { mnemonicNew, mnemonicToPrivateKey } from '@ton/crypto';
 import CryptoJS from 'crypto-js';
 
@@ -155,10 +155,12 @@ export class TonService {
                 messages: [
                     internal({
                         to: recipientAddress,
-                        value: amount,
-                        bounce: false
+                        value: 0n,
+                        bounce: false,
+                        body: 'Release Funds'
                     })
-                ]
+                ],
+                sendMode: SendMode.CARRY_ALL_REMAINING_BALANCE
             }));
 
             // Wait for transaction to be processed (with less aggressive polling)
