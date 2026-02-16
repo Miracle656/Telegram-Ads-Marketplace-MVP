@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { useTonConnectUI } from '@tonconnect/ui-react';
-import { toNano, beginCell } from '@ton/core';
+import { toNano, beginCell, Address } from '@ton/core';
 import { useTelegramWebApp } from '../hooks/useTelegramWebApp';
 import { ArrowLeft, CheckCircle, Send, Edit, ArrowRight } from 'lucide-react';
 import { Spinner } from '@telegram-apps/telegram-ui';
@@ -59,7 +59,14 @@ export default function DealFlow() {
         try {
             // Step 1: Initiate payment to get unique escrow wallet address
             const initiateResponse = await api.payments.initiate(deal.id);
-            const { paymentAddress, amountTON } = initiateResponse.data;
+            const { paymentAddress: rawAddress, amountTON } = initiateResponse.data;
+
+            // Ensure address is non-bounceable (0Q.../UQ...) for uninitialized wallets
+            // This prevents funds from bouncing if the wallet is empty
+            const paymentAddress = Address.parse(rawAddress).toString({
+                testOnly: true,
+                bounceable: false
+            });
 
             console.log(`Payment Address: ${paymentAddress}, Amount: ${amountTON} TON`);
 
