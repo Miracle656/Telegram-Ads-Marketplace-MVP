@@ -442,7 +442,7 @@ router.get('/admin/release-stuck', async (req: Request, res: Response) => {
                     payment.escrowWallet,
                     payment.encryptedKey,
                     walletAddress,
-                    BigInt(Math.round(payment.amount)) // Ensure BigInt for nanotons
+                    tonService.toNanoton(payment.amount)
                 );
 
                 // Update status
