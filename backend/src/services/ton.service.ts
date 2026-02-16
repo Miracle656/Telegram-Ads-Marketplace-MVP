@@ -135,6 +135,14 @@ export class TonService {
             // Check if contract is deployed
             const isDeployed = await this.retry(() => this.client.isContractDeployed(wallet.address));
 
+            // Check balance
+            const balance = await this.retry(() => this.client.getBalance(wallet.address));
+            console.log(`[TonService] Wallet balance: ${fromNano(balance)} TON`);
+
+            if (balance === 0n) {
+                throw new Error(`Escrow wallet ${wallet.address.toString()} is empty (0 TON). Cannot release funds.`);
+            }
+
             let seqno = 0;
             if (isDeployed) {
                 const contract = this.client.open(wallet);
