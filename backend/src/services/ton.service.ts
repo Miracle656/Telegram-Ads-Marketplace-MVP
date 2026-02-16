@@ -148,8 +148,10 @@ export class TonService {
 
             // Open wallet
             const contract = this.client.open(wallet);
+            const isTestnet = process.env.TON_NETWORK !== 'mainnet';
+            const friendlyAddress = wallet.address.toString({ testOnly: isTestnet, bounceable: false });
 
-            console.log(`[TonService] Releasing funds from wallet: ${wallet.address.toString()}`);
+            console.log(`[TonService] Releasing funds from wallet: ${friendlyAddress}`);
 
             // Check if contract is deployed
             const isDeployed = await this.retry(() => this.client.isContractDeployed(wallet.address));
