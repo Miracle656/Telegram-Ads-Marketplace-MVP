@@ -134,11 +134,8 @@ router.post('/:dealId/mark-sent', authMiddleware, async (req: Request, res: Resp
             return;
         }
 
-        // Update deal status to indicate payment is sent (pending confirmation)
-        await prisma.deal.update({
-            where: { id: dealId },
-            data: { status: DealStatus.PAYMENT_RECEIVED }
-        });
+        // Update deal status and notify user
+        await dealService.transitionDeal(String(dealId), DealStatus.PAYMENT_RECEIVED);
 
         res.json({ success: true, message: 'Payment marked as sent' });
     } catch (error) {
