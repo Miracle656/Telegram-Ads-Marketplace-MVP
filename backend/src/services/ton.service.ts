@@ -159,7 +159,9 @@ export class TonService {
             console.log(`[TonService] Wallet balance: ${fromNano(balance)} TON`);
 
             if (balance === 0n) {
-                throw new Error(`Escrow wallet ${wallet.address.toString()} is empty (0 TON). Cannot release funds.`);
+                const isTestnet = process.env.TON_NETWORK !== 'mainnet';
+                const friendlyAddress = wallet.address.toString({ testOnly: isTestnet, bounceable: false });
+                throw new Error(`Escrow wallet ${friendlyAddress} is empty (0 TON). Cannot release funds.`);
             }
 
             let seqno = 0;
