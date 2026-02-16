@@ -32,7 +32,12 @@ router.post('/initiate', authMiddleware, async (req: Request, res: Response) => 
         }
 
         if ((deal as any).payment) {
-            res.status(400).json({ error: 'Payment already initiated' });
+            const payment = (deal as any).payment;
+            res.status(200).json({
+                paymentAddress: payment.escrowWallet,
+                amount: deal.agreedPrice,
+                amountTON: tonService.fromNanoton(BigInt(deal.agreedPrice))
+            });
             return;
         }
 
