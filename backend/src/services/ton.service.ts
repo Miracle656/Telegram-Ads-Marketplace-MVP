@@ -1,4 +1,4 @@
-import { Address, TonClient, WalletContractV4, internal, fromNano, toNano, beginCell, Cell, SendMode } from '@ton/ton';
+import { Address, TonClient, WalletContractV4, internal, external, storeMessage, fromNano, toNano, beginCell, Cell, SendMode } from '@ton/ton';
 import { mnemonicNew, mnemonicToPrivateKey } from '@ton/crypto';
 import CryptoJS from 'crypto-js';
 
@@ -133,23 +133,22 @@ export class TonService {
             console.log(`[TonService] Releasing funds from wallet: ${wallet.address.toString()}`);
 
             // Check if contract is deployed
-            const state = await this.retry(() => this.client.getContractState(wallet.address));
+            const isDeployed = await this.retry(() => this.client.isContractDeployed(wallet.address));
 
-            let seqno: number;
-            if (state.state === 'active') {
+            let seqno = 0;
+            if (isDeployed) {
+                const contract = this.client.open(wallet);
                 try {
                     seqno = await this.retry(() => contract.getSeqno());
-                    console.log(`[TonService] Wallet active, seqno: ${seqno}`);
                 } catch (e) {
-                    console.error('[TonService] Failed to get seqno:', e);
-                    throw e;
+                    console.warn('[TonService] Failed to get seqno, assuming 0:', e);
                 }
-            } else {
-                console.log(`[TonService] Wallet state: ${state.state}, using seqno 0`);
-                seqno = 0;
             }
 
-            await this.retry(() => contract.sendTransfer({
+            console.log(`[TonService] Processing release. Deployed: ${isDeployed}, Seqno: ${seqno}`);
+
+            // Create transfer message (signed body)
+            const transfer = wallet.createTransfer({
                 seqno,
                 secretKey: keyPair.secretKey,
                 messages: [
@@ -161,7 +160,18 @@ export class TonService {
                     })
                 ],
                 sendMode: SendMode.CARRY_ALL_REMAINING_BALANCE
-            }));
+            });
+
+            // Construct external message with StateInit if needed (for uninitialized wallets)
+            const ext = external({
+                to: wallet.address,
+                init: isDeployed ? null : wallet.init,
+                body: transfer
+            });
+
+            // Serialize and send
+            const msgCell = beginCell().storeWritable(storeMessage(ext)).endCell();
+            await this.retry(() => this.client.sendFile(msgCell.toBoc()));
 
             // Wait for transaction to be processed (with less aggressive polling)
             let currentSeqno = seqno;
