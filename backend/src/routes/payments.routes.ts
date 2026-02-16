@@ -102,12 +102,8 @@ router.post('/initiate', authMiddleware, async (req: Request, res: Response) => 
             }
         });
 
-        // Also send Telegram bot notification
-        await sendDealNotification(
-            dealWithParticipants.channel.owner.telegramId.toString(),
-            `💰 *Payment Received!*\n\nYou received ${tonService.fromNanoton(BigInt(dealWithParticipants.agreedPrice))} TON for "${dealWithParticipants.channel.title}"\n\nPlease post the ad now and mark it as posted in the deal page.`,
-            dealId.toString()
-        );
+        // Notification removed: Payment is pending, not received yet. 
+        // Real notification happens when payment is confirmed or marked sent.
 
         res.status(201).json({
             paymentAddress: escrowAddress,
