@@ -35,14 +35,33 @@ export class TonService {
      * Get escrow wallet for a deal
      * Uses a single master escrow wallet that's already deployed
      */
+    /**
+     * Generate a new unique escrow wallet for a deal
+     */
     async generateDealWallet(): Promise<{ address: string; encryptedKey: string }> {
-        // Use the master escrow wallet address (already deployed and can receive funds)
-        // For testnet, this should be YOUR wallet address that you control
-        const masterWallet = process.env.MASTER_ESCROW_WALLET || 'EQDhMrwyCrN4nfvROwnyp4xDCkt8UwacuXiDy4IXSpwjAxVR';
+        // Generate new random mnemonic
+        const mnemonic = await mnemonicNew(24);
+
+        // Derive key pair and wallet
+        const keyPair = await mnemonicToPrivateKey(mnemonic);
+        const wallet = WalletContractV4.create({
+            workchain: 0,
+            publicKey: keyPair.publicKey
+        });
+
+        // Get non-bounceable address (important for uninitialized wallets!)
+        const isTestnet = process.env.TON_NETWORK !== 'mainnet';
+        const address = wallet.address.toString({
+            testOnly: isTestnet,
+            bounceable: false
+        });
+
+        // Encrypt mnemonic
+        const encryptedKey = CryptoJS.AES.encrypt(mnemonic.join(' '), ENCRYPTION_KEY).toString();
 
         return {
-            address: masterWallet,
-            encryptedKey: '' // No key needed since we're using a single master wallet
+            address,
+            encryptedKey
         };
     }
 
