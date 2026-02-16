@@ -74,15 +74,15 @@ router.post('/initiate', authMiddleware, async (req: Request, res: Response) => 
             return;
         }
 
-        // Use the deployed escrow contract
-        const escrowAddress = tonService.getEscrowContractAddress();
+        // Generate unique deal wallet
+        const { address: escrowAddress, encryptedKey } = await tonService.generateDealWallet();
 
         // Create payment record
         const payment = await prisma.payment.create({
             data: {
                 dealId,
                 escrowWallet: escrowAddress,
-                encryptedKey: '', // Not needed for smart contract escrow
+                encryptedKey: encryptedKey,
                 amount: dealWithParticipants.agreedPrice
             }
         });
