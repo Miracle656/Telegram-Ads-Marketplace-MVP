@@ -78,8 +78,8 @@ export default function DealFlow() {
                 messages: [
                     {
                         address: paymentAddress,
-                        amount: amount.toString(),
-                        payload: depositPayload  // Include Deposit opcode
+                        amount: amount.toString()
+                        // No payload needed for simple transfer to unique wallet
                     }
                 ]
             };
